@@ -17,8 +17,11 @@ async def lifespan(app: FastAPI):
     
     yield
     
-    await bot.stop()
-    print("Bot Stopped")
+    try:
+        await bot.stop()
+        print("Bot Stopped")
+    except Exception as e:
+        print(f"Bot shutdown error (can be ignored): {e}")
 
 app = FastAPI(lifespan=lifespan)
 app.include_router(router)
