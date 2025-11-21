@@ -1,4 +1,5 @@
 from pyrogram import Client
+from pyrogram.storage import MemoryStorage
 from config import Config
 
 class Bot(Client):
@@ -8,7 +9,8 @@ class Bot(Client):
             api_id=Config.API_ID,
             api_hash=Config.API_HASH,
             bot_token=Config.BOT_TOKEN,
-            plugins=dict(root="plugins")
+            plugins=dict(root="plugins"),
+            in_memory=True
         )
 
     async def start(self):
