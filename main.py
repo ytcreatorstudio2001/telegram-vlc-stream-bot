@@ -27,5 +27,6 @@ if __name__ == "__main__":
     uvicorn.run(
         "main:app",
         host=Config.HOST,
-        port=Config.PORT
+        port=Config.PORT,
+        workers=1
     )

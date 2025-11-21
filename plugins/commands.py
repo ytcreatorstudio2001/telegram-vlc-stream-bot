@@ -13,6 +13,7 @@ print("Loading commands plugin...")
 
 @Client.on_message(filters.command("start"))
 async def start(client: Client, message: Message):
+    print(f"DEBUG: Received /start from {message.from_user.id}")
     logger.info(f"Received /start from {message.from_user.id}")
     await message.reply_text(
         "Hello! I am a Telegram File Streaming Bot.\n"
