@@ -56,14 +56,16 @@ async def stream_media(chat_id: int, message_id: int, request: Request):
     # Force linear streaming for now to prevent VLC seeking timeouts
     # We will re-enable seeking once linear playback is confirmed
     headers = {
-        "Content-Length": str(file_size),
+        "Content-Range": f"bytes {start}-{end}/{file_size}",
+        "Accept-Ranges": "bytes",
+        "Content-Length": str(content_length),
         "Content-Type": mime_type,
         "Content-Disposition": f'inline; filename="{file_name}"'
     }
 
     return StreamingResponse(
-        streamer.yield_chunks(0, file_size),
-        status_code=200,
+        streamer.yield_chunks(start, end + 1),
+        status_code=206 if range_header else 200,
         headers=headers,
         media_type=mime_type
     )

@@ -1,10 +1,11 @@
 import math
 import logging
 import asyncio
-import os
-import tempfile
-from pyrogram import Client
+from pyrogram import Client, utils
 from pyrogram.file_id import FileId
+from pyrogram.raw.functions.upload import GetFile
+from pyrogram.raw.types import InputFileLocation
+from pyrogram.errors import FileMigrate, FloodWait
 
 class TelegramFileStreamer:
     def __init__(self, client: Client, file_id: str, file_size: int):
@@ -14,133 +15,102 @@ class TelegramFileStreamer:
         self.chunk_size = 1024 * 1024 # 1MB chunks
 
     async def get_file_location(self):
-        return None
+        # Decode the file_id to get the location
+        decoded = FileId.decode(self.file_id)
+        
+        # Create InputFileLocation manually from decoded FileId
+        from pyrogram.raw.types import InputDocumentFileLocation, InputPhotoFileLocation
+        
+        # Check the file type and create appropriate location
+        if decoded.file_type in [1, 2]:  # Photo
+            media_input_location = InputPhotoFileLocation(
+                id=decoded.media_id,
+                access_hash=decoded.access_hash,
+                file_reference=decoded.file_reference,
+                thumb_size=""
+            )
+        else:  # Document, Video, Audio, etc.
+            media_input_location = InputDocumentFileLocation(
+                id=decoded.media_id,
+                access_hash=decoded.access_hash,
+                file_reference=decoded.file_reference,
+                thumb_size=""
+            )
+        
+        return media_input_location
 
     async def yield_chunks(self, start: int, end: int):
         """
-        Streams the file by downloading it to a temp file in the background.
-        Crucially, it reads from the .temp file that Pyrogram creates while downloading.
-        Includes logic to handle file renaming (temp -> final) and buffering.
+        Stream file chunks using direct GetFile calls.
+        Handles DC migration by retrying requests.
+        Supports random access for fast seeking.
         """
-        # Create a temp file path (but don't create the file yet)
-        fd, temp_path = tempfile.mkstemp()
-        os.close(fd)
-        os.remove(temp_path)
+        location = await self.get_file_location()
         
-        download_task = None
+        # Telegram requires offset to be divisible by 4096 (4KB)
+        current_offset = start
         
-        try:
-            # Start download in background
-            download_task = asyncio.create_task(
-                self.client.download_media(self.file_id, file_name=temp_path)
-            )
+        while current_offset < end:
+            aligned_offset = (current_offset // 4096) * 4096
+            gap = current_offset - aligned_offset
             
-            current = start
-            temp_file_path = temp_path + ".temp"
-            final_file_path = temp_path
+            bytes_needed = min(self.chunk_size, end - current_offset)
+            request_amount = gap + bytes_needed
             
-            # Buffer for small reads
-            min_chunk_size = 64 * 1024 # 64KB
+            # Align request limit to 4096
+            if request_amount % 4096 != 0:
+                request_limit = math.ceil(request_amount / 4096) * 4096
+            else:
+                request_limit = request_amount
             
-            while current < end:
-                # Robust file finding loop
-                active_path = None
-                for _ in range(3): # Retry a few times in case of rename race
-                    if os.path.exists(temp_file_path):
-                        active_path = temp_file_path
-                        break
-                    elif os.path.exists(final_file_path):
-                        active_path = final_file_path
-                        break
-                    await asyncio.sleep(0.1)
-                
-                if not active_path:
-                    # If download task is done and no file found, something is wrong
-                    if download_task.done():
-                        # Check if it finished successfully just now
-                        if os.path.exists(final_file_path):
-                            active_path = final_file_path
-                        else:
-                             # Maybe failed?
-                             try:
-                                 download_task.result()
-                             except Exception as e:
-                                 raise e
-                             break # File missing after success?
-                    else:
-                        # Wait for download to start creating file
-                        await asyncio.sleep(0.5)
-                        continue
+            # Safety cap 1MB + alignment
+            if request_limit > 1024 * 1024:
+                request_limit = 1024 * 1024
 
-                file_size_on_disk = 0
+            retries = 5
+            while retries > 0:
                 try:
-                    file_size_on_disk = os.path.getsize(active_path)
-                except FileNotFoundError:
-                    # Renamed while checking? Retry loop
+                    result = await self.client.invoke(
+                        GetFile(
+                            location=location,
+                            offset=aligned_offset,
+                            limit=request_limit
+                        )
+                    )
+                    
+                    chunk = result.bytes
+                    
+                    if gap > 0:
+                        chunk = chunk[gap:]
+                    
+                    if len(chunk) > bytes_needed:
+                        chunk = chunk[:bytes_needed]
+                    
+                    if not chunk:
+                        # End of file reached unexpectedly
+                        return
+
+                    yield chunk
+                    current_offset += len(chunk)
+                    break # Success, exit retry loop
+                    
+                except FileMigrate as e:
+                    logging.warning(f"DC Migration detected (DC {e.value}). Retrying...")
+                    # Pyrogram handles the session migration internally when this error is raised
+                    # We just need to wait a bit and retry the invoke
+                    await asyncio.sleep(1)
+                    retries -= 1
                     continue
-
-                # If we have data to read
-                if file_size_on_disk > current:
-                    available = file_size_on_disk - current
                     
-                    # Wait for at least min_chunk_size unless download is done or we are near end
-                    if available < min_chunk_size and not download_task.done() and (end - current) > min_chunk_size:
-                        await asyncio.sleep(0.2)
-                        continue
-
-                    to_read = min(self.chunk_size, available, end - current)
+                except FloodWait as e:
+                    logging.warning(f"FloodWait: {e.value} seconds. Sleeping...")
+                    await asyncio.sleep(e.value)
+                    # Don't decrement retries for FloodWait
+                    continue
                     
-                    if to_read > 0:
-                        try:
-                            with open(active_path, "rb") as f:
-                                f.seek(current)
-                                chunk = f.read(to_read)
-                                if chunk:
-                                    yield chunk
-                                    current += len(chunk)
-                                    continue
-                        except FileNotFoundError:
-                            continue # Renamed during open? Retry
-                        except Exception as e:
-                            logging.error(f"Read error: {e}")
-                            raise e
-
-                # Check if download finished
-                if download_task.done():
-                    try:
-                        download_task.result()
-                        # If we are here, it means we consumed all available data
-                        # Check if there is any final data in the final file
-                        if os.path.exists(final_file_path):
-                            final_size = os.path.getsize(final_file_path)
-                            if final_size > current:
-                                continue # Read remaining
-                        break # Done
-                    except Exception as e:
-                        logging.error(f"Background download failed: {e}")
+                except Exception as e:
+                    logging.error(f"Fetch error at {current_offset}: {e}")
+                    retries -= 1
+                    await asyncio.sleep(1)
+                    if retries == 0:
                         raise e
-                
-                # Wait for more data
-                await asyncio.sleep(0.2)
-
-        except Exception as e:
-            logging.error(f"Streaming error: {e}")
-            raise
-        finally:
-            if download_task and not download_task.done():
-                download_task.cancel()
-                try:
-                    await download_task
-                except asyncio.CancelledError:
-                    pass
-            
-            if os.path.exists(temp_path):
-                try:
-                    os.remove(temp_path)
-                except OSError:
-                    pass
-            if os.path.exists(temp_path + ".temp"):
-                try:
-                    os.remove(temp_path + ".temp")
-                except OSError:
-                    pass
