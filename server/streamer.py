@@ -43,10 +43,10 @@ class TelegramFileStreamer:
         # Stream file chunks using direct GetFile calls.
         # Handles DC migration by retrying requests.
         # Supports random access for fast seeking.
-        
+
         # Telegram requires offset to be divisible by 4096 (4KB)
         current_offset = start
-        
+
         while current_offset < end:
             # Always get a fresh location (covers any DC migration)
             location = await self.get_file_location()
@@ -97,13 +97,20 @@ class TelegramFileStreamer:
                     )
                     # Update client session DC if possible
                     try:
-                        self.client.session.dc_id = e.value
+                        # Update the client's DC information
+                        await self.client.session.stop()
+                        self.client.session = None
+                        await self.client.session.start()
                     except Exception as sess_err:
-                        logging.error(f"Failed to set client DC: {sess_err}")
+                        logging.error(f"Failed to handle DC migration: {sess_err}")
+
+                    # Wait a bit before retrying
+                    await asyncio.sleep(1)
                     # Refresh location for the new DC
                     location = await self.get_file_location()
-                    retries = 5
-                    await asyncio.sleep(1)
+                    retries -= 1
+                    if retries > 0:
+                        await asyncio.sleep(2)  # Wait longer between retries for DC migration
                     continue
 
                 except FloodWait as e:
