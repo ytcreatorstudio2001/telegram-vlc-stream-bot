@@ -40,57 +40,9 @@ class TelegramFileStreamer:
         return media_input_location
 
     async def yield_chunks(self, start: int, end: int):
-        """
-        Stream file chunks using direct GetFile calls.
-        Handles DC migration by retrying requests.
-        Supports random access for fast seeking.
-import math
-import logging
-import asyncio
-from pyrogram import Client, utils
-from pyrogram.file_id import FileId
-from pyrogram.raw.functions.upload import GetFile
-from pyrogram.raw.types import InputFileLocation
-from pyrogram.errors import FileMigrate, FloodWait
-
-class TelegramFileStreamer:
-    def __init__(self, client: Client, file_id: str, file_size: int):
-        self.client = client
-        self.file_id = file_id
-        self.file_size = file_size
-        self.chunk_size = 2 * 1024 * 1024  # 2 MiB chunks
-
-    async def get_file_location(self):
-        # Decode the file_id to get the location
-        decoded = FileId.decode(self.file_id)
-        
-        # Create InputFileLocation manually from decoded FileId
-        from pyrogram.raw.types import InputDocumentFileLocation, InputPhotoFileLocation
-        
-        # Check the file type and create appropriate location
-        if decoded.file_type in [1, 2]:  # Photo
-            media_input_location = InputPhotoFileLocation(
-                id=decoded.media_id,
-                access_hash=decoded.access_hash,
-                file_reference=decoded.file_reference,
-                thumb_size=""
-            )
-        else:  # Document, Video, Audio, etc.
-            media_input_location = InputDocumentFileLocation(
-                id=decoded.media_id,
-                access_hash=decoded.access_hash,
-                file_reference=decoded.file_reference,
-                thumb_size=""
-            )
-        
-        return media_input_location
-
-    async def yield_chunks(self, start: int, end: int):
-        """
-        Stream file chunks using direct GetFile calls.
-        Handles DC migration by retrying requests.
-        Supports random access for fast seeking.
-        """
+        # Stream file chunks using direct GetFile calls.
+        # Handles DC migration by retrying requests.
+        # Supports random access for fast seeking.
         
         # Telegram requires offset to be divisible by 4096 (4KB)
         current_offset = start
