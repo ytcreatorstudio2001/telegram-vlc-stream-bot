@@ -35,15 +35,20 @@ class TelegramFileStreamer:
                 self.client.download_media(self.file_id, file_name=temp_path)
             )
             
-            current = start
-            
             # Loop until we have served the requested range
+            last_log_time = 0
             while current < end:
                 # Check current file size
                 if os.path.exists(temp_path):
                     file_size_on_disk = os.path.getsize(temp_path)
                 else:
                     file_size_on_disk = 0
+
+                # Log status every 2 seconds to avoid spam
+                import time
+                if time.time() - last_log_time > 2:
+                    logging.info(f"Stream status: current={current}, on_disk={file_size_on_disk}, target={end}")
+                    last_log_time = time.time()
 
                 # If we have data to read
                 if file_size_on_disk > current:
@@ -57,6 +62,7 @@ class TelegramFileStreamer:
                             f.seek(current)
                             chunk = f.read(to_read)
                             if chunk:
+                                # logging.debug(f"Yielding chunk: {len(chunk)} bytes")
                                 yield chunk
                                 current += len(chunk)
                                 continue
@@ -64,16 +70,18 @@ class TelegramFileStreamer:
                 # Check if download finished or failed
                 if download_task.done():
                     try:
-                        download_task.result() # Raise exception if failed
+                        result = download_task.result() # Raise exception if failed
+                        logging.info(f"Download task finished. Result: {result}")
                         # If finished and we haven't reached 'end' yet, but file is fully read
                         if file_size_on_disk <= current:
+                            logging.info("Download finished but no more data to read. Ending stream.")
                             break # End of file
                     except Exception as e:
                         logging.error(f"Background download failed: {e}")
                         raise e
                 
                 # Wait for more data
-                await asyncio.sleep(0.5)
+                await asyncio.sleep(0.1)
 
         except Exception as e:
             logging.error(f"Streaming error: {e}")
