@@ -20,12 +20,12 @@ class TelegramFileStreamer:
         """
         Streams the file by downloading it to a temp file in the background.
         Crucially, it reads from the .temp file that Pyrogram creates while downloading.
+        Includes logic to handle file renaming (temp -> final) and buffering.
         """
         # Create a temp file path (but don't create the file yet)
-        # We want Pyrogram to create it
         fd, temp_path = tempfile.mkstemp()
         os.close(fd)
-        os.remove(temp_path) # Remove it so Pyrogram can create it
+        os.remove(temp_path)
         
         download_task = None
         
@@ -36,69 +36,97 @@ class TelegramFileStreamer:
             )
             
             current = start
-            
-            # Pyrogram appends .temp to the filename while downloading
             temp_file_path = temp_path + ".temp"
             final_file_path = temp_path
             
-            # Loop until we have served the requested range
+            # Buffer for small reads
+            min_chunk_size = 64 * 1024 # 64KB
+            
             while current < end:
-                # Determine which file to read from
+                # Robust file finding loop
                 active_path = None
-                if os.path.exists(temp_file_path):
-                    active_path = temp_file_path
-                elif os.path.exists(final_file_path):
-                    active_path = final_file_path
+                for _ in range(3): # Retry a few times in case of rename race
+                    if os.path.exists(temp_file_path):
+                        active_path = temp_file_path
+                        break
+                    elif os.path.exists(final_file_path):
+                        active_path = final_file_path
+                        break
+                    await asyncio.sleep(0.1)
                 
+                if not active_path:
+                    # If download task is done and no file found, something is wrong
+                    if download_task.done():
+                        # Check if it finished successfully just now
+                        if os.path.exists(final_file_path):
+                            active_path = final_file_path
+                        else:
+                             # Maybe failed?
+                             try:
+                                 download_task.result()
+                             except Exception as e:
+                                 raise e
+                             break # File missing after success?
+                    else:
+                        # Wait for download to start creating file
+                        await asyncio.sleep(0.5)
+                        continue
+
                 file_size_on_disk = 0
-                if active_path:
+                try:
                     file_size_on_disk = os.path.getsize(active_path)
+                except FileNotFoundError:
+                    # Renamed while checking? Retry loop
+                    continue
 
                 # If we have data to read
                 if file_size_on_disk > current:
                     available = file_size_on_disk - current
+                    
+                    # Wait for at least min_chunk_size unless download is done or we are near end
+                    if available < min_chunk_size and not download_task.done() and (end - current) > min_chunk_size:
+                        await asyncio.sleep(0.2)
+                        continue
+
                     to_read = min(self.chunk_size, available, end - current)
                     
                     if to_read > 0:
-                        with open(active_path, "rb") as f:
-                            f.seek(current)
-                            chunk = f.read(to_read)
-                            if chunk:
-                                yield chunk
-                                current += len(chunk)
-                                continue
+                        try:
+                            with open(active_path, "rb") as f:
+                                f.seek(current)
+                                chunk = f.read(to_read)
+                                if chunk:
+                                    yield chunk
+                                    current += len(chunk)
+                                    continue
+                        except FileNotFoundError:
+                            continue # Renamed during open? Retry
+                        except Exception as e:
+                            logging.error(f"Read error: {e}")
+                            raise e
 
-                # Check if download finished or failed
+                # Check if download finished
                 if download_task.done():
                     try:
-                        download_task.result() # Raise exception if failed
-                        
-                        # If download finished, the file should be at final_file_path
+                        download_task.result()
+                        # If we are here, it means we consumed all available data
+                        # Check if there is any final data in the final file
                         if os.path.exists(final_file_path):
                             final_size = os.path.getsize(final_file_path)
                             if final_size > current:
-                                # Read remaining data from final file
-                                continue
-                            else:
-                                break # Done
-                        elif os.path.exists(temp_file_path):
-                             # Should not happen if done, but just in case
-                             pass
-                        else:
-                             # File missing?
-                             break
+                                continue # Read remaining
+                        break # Done
                     except Exception as e:
                         logging.error(f"Background download failed: {e}")
                         raise e
                 
                 # Wait for more data
-                await asyncio.sleep(0.5)
+                await asyncio.sleep(0.2)
 
         except Exception as e:
             logging.error(f"Streaming error: {e}")
             raise
         finally:
-            # Cleanup
             if download_task and not download_task.done():
                 download_task.cancel()
                 try:
