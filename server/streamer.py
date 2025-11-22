@@ -12,7 +12,7 @@ class TelegramFileStreamer:
         self.client = client
         self.file_id = file_id
         self.file_size = file_size
-        self.chunk_size = 2 * 1024 * 1024  # 2 MiB chunks
+        self.chunk_size = 512 * 1024  # 512 KiB chunks to avoid LIMIT_INVALID errors
 
     async def get_file_location(self):
         # Decode the file_id to get the location
@@ -63,7 +63,7 @@ class TelegramFileStreamer:
                 if request_amount % 4096 != 0
                 else request_amount
             )
-            # Cap request size to chunk_size (now 2 MiB)
+            # Cap request size to chunk_size (now 512 KiB)
             if request_limit > self.chunk_size:
                 request_limit = self.chunk_size
 
