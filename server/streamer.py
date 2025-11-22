@@ -16,9 +16,26 @@ class TelegramFileStreamer:
     async def get_file_location(self):
         # Decode the file_id to get the location
         decoded = FileId.decode(self.file_id)
-        media_input_location = decoded.make_input_location(
-            file_reference=decoded.file_reference
-        )
+        
+        # Create InputFileLocation manually from decoded FileId
+        from pyrogram.raw.types import InputDocumentFileLocation, InputPhotoFileLocation
+        
+        # Check the file type and create appropriate location
+        if decoded.file_type in [1, 2]:  # Photo
+            media_input_location = InputPhotoFileLocation(
+                id=decoded.media_id,
+                access_hash=decoded.access_hash,
+                file_reference=decoded.file_reference,
+                thumb_size=""
+            )
+        else:  # Document, Video, Audio, etc.
+            media_input_location = InputDocumentFileLocation(
+                id=decoded.media_id,
+                access_hash=decoded.access_hash,
+                file_reference=decoded.file_reference,
+                thumb_size=""
+            )
+        
         return media_input_location
 
     async def yield_chunks(self, start: int, end: int):
