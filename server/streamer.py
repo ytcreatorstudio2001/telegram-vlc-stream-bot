@@ -39,116 +39,29 @@ class TelegramFileStreamer:
         return media_input_location
 
     async def yield_chunks(self, start: int, end: int):
+        """Yield file chunks using Pyrogram's download_media which handles DC migration.
+        This loads the entire file into memory (acceptable for moderate file sizes) and then
+        yields the requested byte range in 1MB chunks.
         """
-        Stream file chunks using Pyrogram's download with range support.
-        This automatically handles DC migration and file references.
-        """
-        import io
-        
-        # Calculate how many bytes we need
-        bytes_needed = end - start
-        
-        # Use Pyrogram's download_media with in_memory=True and file_name as BytesIO
-        # This handles DC migration automatically
         try:
-            # Create a BytesIO buffer
-            buffer = io.BytesIO()
-            
-            # Download the specific range
-            # Note: Pyrogram's download_media doesn't support range natively,
-            # so we'll download and then slice
-            # For better performance, we should use the raw API with proper DC handling
-            
-            # Alternative: Use bot.download_media with offset
-            # But for now, let's use a simpler approach with get_file
-            
-            # Get the message to access the file
-            from pyrogram.raw.functions.messages import GetMessages
-            from pyrogram.raw.types import InputMessageID
-            
-            # We need chat_id and message_id from the route
-            # These should be passed to the streamer
-            # For now, use the low-level API with better error handling
-            
-            location = await self.get_file_location()
-            
-            # Telegram requires offset to be divisible by 4096 (4KB)
-            current_offset = start
-            
-            while current_offset < end:
-                aligned_offset = (current_offset // 4096) * 4096
-                gap = current_offset - aligned_offset
-                
-                bytes_to_fetch = min(self.chunk_size, end - current_offset)
-                request_amount = gap + bytes_to_fetch
-                
-                # Align request limit to 4096
-                if request_amount % 4096 != 0:
-                    request_limit = math.ceil(request_amount / 4096) * 4096
-                else:
-                    request_limit = request_amount
-                
-                # Safety cap 1MB + alignment
-                if request_limit > 1024 * 1024 * 2:
-                    request_limit = 1024 * 1024 * 2
-
-                retries = 3
-                chunk_data = None
-                
-                while retries > 0:
-                    try:
-                        # Use the client's invoke with automatic DC handling
-                        result = await self.client.invoke(
-                            GetFile(
-                                location=location,
-                                offset=aligned_offset,
-                                limit=request_limit
-                            )
-                        )
-                        
-                        chunk_data = result.bytes
-                        break  # Success
-                        
-                    except Exception as e:
-                        error_msg = str(e)
-                        
-                        # Check if it's a FileMigrate error
-                        if "FILE_MIGRATE" in error_msg or "303" in error_msg:
-                            # Extract DC number and switch
-                            logging.warning(f"File in different DC: {e}")
-                            # Pyrogram should handle this, but if not, we need to reconnect
-                            # For now, just retry - Pyrogram's session should auto-migrate
-                            retries -= 1
-                            if retries > 0:
-                                await asyncio.sleep(2)  # Wait a bit longer for DC migration
-                                continue
-                        
-                        retries -= 1
-                        logging.warning(f"Fetch error at {current_offset}: {e}. Retrying ({retries} left)...")
-                        if retries == 0:
-                            logging.error(f"Failed to fetch chunk at {current_offset} after retries.")
-                            raise e
-                        await asyncio.sleep(1)
-                
-                if chunk_data is None:
-                    logging.error("Failed to fetch chunk data")
-                    return
-                
-                # Remove gap bytes if any
-                if gap > 0:
-                    chunk_data = chunk_data[gap:]
-                
-                # Trim to exact bytes needed
-                if len(chunk_data) > bytes_to_fetch:
-                    chunk_data = chunk_data[:bytes_to_fetch]
-                
-                if not chunk_data:
-                    # End of file reached
-                    return
-
-                yield chunk_data
-                current_offset += len(chunk_data)
-                
+            # Download the full file into memory as bytes
+            full_bytes = await self.client.download_media(self.file_id, in_memory=True)
         except Exception as e:
-            logging.error(f"Streaming error: {e}")
-            raise
+            logging.error(f"Failed to download file {self.file_id}: {e}")
+            raise e
+
+        # Validate start/end
+        file_len = len(full_bytes)
+        if start < 0:
+            start = 0
+        if end <= 0 or end > file_len:
+            end = file_len
+
+        current = start
+        while current < end:
+            next_offset = min(current + self.chunk_size, end)
+            chunk = full_bytes[current:next_offset]
+            if not chunk:
+                break
+            yield chunk
+            current = next_offset
