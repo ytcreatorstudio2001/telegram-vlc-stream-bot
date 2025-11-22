@@ -1,11 +1,36 @@
 import math
 import logging
 import asyncio
-from pyrogram import Client, utils
+from pyrogram import Client
 from pyrogram.file_id import FileId
-from pyrogram.raw.functions.upload import GetFile
-from pyrogram.raw.types import InputFileLocation
-from pyrogram.errors import FileMigrate, FloodWait
+
+class StreamBuffer:
+    """
+    A file-like object that writes to an asyncio.Queue.
+    Used to pipe Pyrogram's download_media directly to the streaming response.
+    """
+    def __init__(self, queue: asyncio.Queue):
+        self.queue = queue
+
+    def write(self, data: bytes):
+        # This method is called by Pyrogram's downloader
+        # We put the chunk into the queue
+        # Note: This is called from a sync context in Pyrogram's worker, 
+        # but we need to put it in an async queue.
+        # Since Pyrogram runs in an asyncio loop, we can use call_soon_threadsafe 
+        # or just put_nowait if the queue is unbounded.
+        try:
+            self.queue.put_nowait(data)
+        except asyncio.QueueFull:
+            # Should not happen with unbounded queue
+            pass
+        return len(data)
+
+    def flush(self):
+        pass
+
+    def close(self):
+        pass
 
 class TelegramFileStreamer:
     def __init__(self, client: Client, file_id: str, file_size: int):
@@ -15,101 +40,77 @@ class TelegramFileStreamer:
         self.chunk_size = 1024 * 1024 # 1MB chunks
 
     async def get_file_location(self):
-        # Decode the file_id to get the location
-        decoded = FileId.decode(self.file_id)
-        
-        # Create InputFileLocation manually from decoded FileId
-        from pyrogram.raw.types import InputDocumentFileLocation, InputPhotoFileLocation
-        
-        # Check the file type and create appropriate location
-        if decoded.file_type in [1, 2]:  # Photo
-            media_input_location = InputPhotoFileLocation(
-                id=decoded.media_id,
-                access_hash=decoded.access_hash,
-                file_reference=decoded.file_reference,
-                thumb_size=""
-            )
-        else:  # Document, Video, Audio, etc.
-            media_input_location = InputDocumentFileLocation(
-                id=decoded.media_id,
-                access_hash=decoded.access_hash,
-                file_reference=decoded.file_reference,
-                thumb_size=""
-            )
-        
-        return media_input_location
+        return None
 
     async def yield_chunks(self, start: int, end: int):
         """
-        Stream file chunks using direct GetFile calls.
-        Handles DC migration by retrying requests.
+        Stream file using a Queue buffer.
+        Pyrogram downloads to the queue, we yield from the queue.
         """
-        location = await self.get_file_location()
+        queue = asyncio.Queue()
+        stream_buffer = StreamBuffer(queue)
         
-        # Telegram requires offset to be divisible by 4096 (4KB)
-        current_offset = start
+        # Start download in background
+        download_task = asyncio.create_task(
+            self.client.download_media(
+                self.file_id,
+                file_name=stream_buffer, # Pass our custom buffer
+                in_memory=True # Tell Pyrogram to treat file_name as a file-like object
+            )
+        )
         
-        while current_offset < end:
-            aligned_offset = (current_offset // 4096) * 4096
-            gap = current_offset - aligned_offset
-            
-            bytes_needed = min(self.chunk_size, end - current_offset)
-            request_amount = gap + bytes_needed
-            
-            # Align request limit to 4096
-            if request_amount % 4096 != 0:
-                request_limit = math.ceil(request_amount / 4096) * 4096
-            else:
-                request_limit = request_amount
-            
-            # Safety cap 1MB + alignment
-            if request_limit > 1024 * 1024:
-                request_limit = 1024 * 1024
-
-            retries = 5
-            while retries > 0:
+        current = 0
+        # We need to skip 'start' bytes
+        bytes_to_skip = start
+        
+        try:
+            while current < end:
+                # Wait for data from the queue
+                # We use a timeout to detect if download stalled
                 try:
-                    result = await self.client.invoke(
-                        GetFile(
-                            location=location,
-                            offset=aligned_offset,
-                            limit=request_limit
-                        )
-                    )
-                    
-                    chunk = result.bytes
-                    
-                    if gap > 0:
-                        chunk = chunk[gap:]
-                    
-                    if len(chunk) > bytes_needed:
-                        chunk = chunk[:bytes_needed]
-                    
-                    if not chunk:
-                        # End of file reached unexpectedly
-                        return
+                    # If download is done and queue is empty, we are done
+                    if download_task.done() and queue.empty():
+                        # Check for exceptions
+                        if download_task.exception():
+                            raise download_task.exception()
+                        break
 
+                    # Wait for next chunk
+                    chunk = await asyncio.wait_for(queue.get(), timeout=5.0)
+                    
+                    # Handle skipping for range requests
+                    if bytes_to_skip > 0:
+                        if len(chunk) <= bytes_to_skip:
+                            bytes_to_skip -= len(chunk)
+                            current += len(chunk)
+                            continue
+                        else:
+                            chunk = chunk[bytes_to_skip:]
+                            current += bytes_to_skip
+                            bytes_to_skip = 0
+                    
+                    # Truncate if we go past 'end'
+                    if current + len(chunk) > end:
+                        chunk = chunk[:end - current]
+                    
                     yield chunk
-                    current_offset += len(chunk)
-                    break # Success, exit retry loop
+                    current += len(chunk)
                     
-                except FileMigrate as e:
-                    logging.warning(f"DC Migration detected (DC {e.value}). Retrying...")
-                    # Pyrogram handles the session migration internally when this error is raised
-                    # We just need to wait a bit and retry the invoke
-                    await asyncio.sleep(1)
-                    retries -= 1
+                except asyncio.TimeoutError:
+                    if download_task.done():
+                        if download_task.exception():
+                            raise download_task.exception()
+                        break
+                    # Just a timeout waiting for network, continue waiting
                     continue
                     
-                except FloodWait as e:
-                    logging.warning(f"FloodWait: {e.value} seconds. Sleeping...")
-                    await asyncio.sleep(e.value)
-                    # Don't decrement retries for FloodWait
-                    continue
-                    
-                except Exception as e:
-                    logging.error(f"Fetch error at {current_offset}: {e}")
-                    retries -= 1
-                    await asyncio.sleep(1)
-                    if retries == 0:
-                        raise e
+        except Exception as e:
+            logging.error(f"Streaming error: {e}")
+            raise
+        finally:
+            if not download_task.done():
+                download_task.cancel()
+                try:
+                    await download_task
+                except asyncio.CancelledError:
+                    pass
