@@ -18,7 +18,12 @@ class Bot(Client):
         print("Bot Started!")
 
     async def stop(self, *args):
-        await super().stop()
-        print("Bot Stopped!")
+        try:
+            await super().stop()
+            print("Bot Stopped!")
+        except RuntimeError as e:
+            # Suppress the "attached to a different loop" error
+            if "attached to a different loop" not in str(e):
+                raise
 
 bot = Bot()

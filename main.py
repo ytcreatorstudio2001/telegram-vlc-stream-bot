@@ -41,6 +41,13 @@ async def lifespan(app: FastAPI):
     try:
         await bot.stop()
         print("Bot Stopped")
+    except RuntimeError as e:
+        # Ignore the "attached to a different loop" error during shutdown
+        # This is a known issue with Pyrogram + FastAPI lifespan
+        if "attached to a different loop" in str(e):
+            print("Bot stopped (ignoring asyncio loop cleanup warning)")
+        else:
+            print(f"Bot shutdown error: {e}")
     except Exception as e:
         print(f"Bot shutdown error (can be ignored): {e}")
 

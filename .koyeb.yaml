@@ -1,0 +1,38 @@
+name: telegram-vlc-stream-bot
+
+services:
+  - name: telegram-stream-bot
+    type: web
+    
+    # Use Docker builder
+    build:
+      type: docker
+      dockerfile: Dockerfile
+    
+    # Port configuration
+    ports:
+      - port: 8080
+        protocol: http
+    
+    # Environment variables (will be overridden by Koyeb UI settings)
+    env:
+      - name: API_ID
+      - name: API_HASH
+      - name: BOT_TOKEN
+      - name: URL
+    
+    # Instance configuration
+    instance_type: free
+    regions:
+      - fra
+    
+    # Health check
+    health_checks:
+      - http:
+          port: 8080
+          path: /
+    
+    # Scaling
+    scaling:
+      min: 1
+      max: 1
