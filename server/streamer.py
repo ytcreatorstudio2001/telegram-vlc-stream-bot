@@ -95,11 +95,12 @@ class TelegramFileStreamer:
                     break # Success, exit retry loop
                     
                 except FileMigrate as e:
-                    logging.warning(f"DC Migration detected (DC {e.value}). Retrying...")
-                    # Pyrogram handles the session migration internally when this error is raised
-                    # We just need to wait a bit and retry the invoke
+                    logging.warning(f"DC Migration detected (DC {e.value}). Refreshing location and retrying...")
+                    # Refresh the InputFileLocation after migration
+                    location = await self.get_file_location()
+                    # Reset retries to allow fresh attempts
+                    retries = 5
                     await asyncio.sleep(1)
-                    retries -= 1
                     continue
                     
                 except FloodWait as e:
