@@ -10,7 +10,9 @@ class Bot(Client):
             api_hash=Config.API_HASH,
             bot_token=Config.BOT_TOKEN,
             plugins=dict(root="plugins"),
-            in_memory=True
+            in_memory=True,
+            no_updates=False,  # We need updates for bot commands
+            takeout=False  # Not using takeout mode
         )
 
     async def start(self):
