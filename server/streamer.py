@@ -1,10 +1,10 @@
 import math
 import logging
 import asyncio
-from pyrogram import Client, utils
+import os
+import tempfile
+from pyrogram import Client
 from pyrogram.file_id import FileId
-from pyrogram.raw.functions.upload import GetFile
-from pyrogram.raw.types import InputFileLocation
 
 class TelegramFileStreamer:
     def __init__(self, client: Client, file_id: str, file_size: int):
@@ -14,64 +14,81 @@ class TelegramFileStreamer:
         self.chunk_size = 1024 * 1024 # 1MB chunks
 
     async def get_file_location(self):
-        # Decode the file_id to get the location
-        decoded = FileId.decode(self.file_id)
-        
-        # Create InputFileLocation manually from decoded FileId
-        from pyrogram.raw.types import InputDocumentFileLocation, InputPhotoFileLocation
-        
-        # Check the file type and create appropriate location
-        if decoded.file_type in [1, 2]:  # Photo
-            media_input_location = InputPhotoFileLocation(
-                id=decoded.media_id,
-                access_hash=decoded.access_hash,
-                file_reference=decoded.file_reference,
-                thumb_size=""
-            )
-        else:  # Document, Video, Audio, etc.
-            media_input_location = InputDocumentFileLocation(
-                id=decoded.media_id,
-                access_hash=decoded.access_hash,
-                file_reference=decoded.file_reference,
-                thumb_size=""
-            )
-        
-        return media_input_location
+        # Kept for compatibility, not used in new logic
+        return None
 
     async def yield_chunks(self, start: int, end: int):
-        """Yield file chunks from a temporary file.
-        This avoids loading the whole file into memory and works with any file size.
-        The file is downloaded once to a temp location, then read slice‑by‑slice.
         """
-        import tempfile, os
+        Streams the file by downloading it to a temp file in the background
+        and yielding bytes as they become available.
+        """
+        # Create a temp file
+        fd, temp_path = tempfile.mkstemp()
+        os.close(fd)
+        
+        download_task = None
+        
         try:
-            # Download the file to a temporary location (only once per request)
-            temp_path = await self.client.download_media(self.file_id)
+            # Start download in background
+            # We use a specific file name so Pyrogram writes to it
+            download_task = asyncio.create_task(
+                self.client.download_media(self.file_id, file_name=temp_path)
+            )
+            
+            current = start
+            
+            # Loop until we have served the requested range
+            while current < end:
+                # Check current file size
+                if os.path.exists(temp_path):
+                    file_size_on_disk = os.path.getsize(temp_path)
+                else:
+                    file_size_on_disk = 0
+
+                # If we have data to read
+                if file_size_on_disk > current:
+                    # Calculate how much we can read
+                    # We can read up to 'end' or up to what's available on disk
+                    available = file_size_on_disk - current
+                    to_read = min(self.chunk_size, available, end - current)
+                    
+                    if to_read > 0:
+                        with open(temp_path, "rb") as f:
+                            f.seek(current)
+                            chunk = f.read(to_read)
+                            if chunk:
+                                yield chunk
+                                current += len(chunk)
+                                continue
+
+                # Check if download finished or failed
+                if download_task.done():
+                    try:
+                        download_task.result() # Raise exception if failed
+                        # If finished and we haven't reached 'end' yet, but file is fully read
+                        if file_size_on_disk <= current:
+                            break # End of file
+                    except Exception as e:
+                        logging.error(f"Background download failed: {e}")
+                        raise e
+                
+                # Wait for more data
+                await asyncio.sleep(0.5)
+
         except Exception as e:
-            logging.error(f"Failed to download file {self.file_id}: {e}")
-            raise e
-
-        try:
-            file_len = os.path.getsize(temp_path)
-            # Adjust start/end bounds
-            if start < 0:
-                start = 0
-            if end <= 0 or end > file_len:
-                end = file_len
-
-            with open(temp_path, "rb") as f:
-                f.seek(start)
-                current = start
-                while current < end:
-                    to_read = min(self.chunk_size, end - current)
-                    chunk = f.read(to_read)
-                    if not chunk:
-                        break
-                    yield chunk
-                    current += len(chunk)
+            logging.error(f"Streaming error: {e}")
+            raise
         finally:
-            # Clean up the temporary file
-            try:
-                os.remove(temp_path)
-            except Exception:
-                pass
+            # Cleanup
+            if download_task and not download_task.done():
+                download_task.cancel()
+                try:
+                    await download_task
+                except asyncio.CancelledError:
+                    pass
+            
+            if os.path.exists(temp_path):
+                try:
+                    os.remove(temp_path)
+                except OSError:
+                    pass
