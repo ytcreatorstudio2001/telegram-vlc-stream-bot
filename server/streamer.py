@@ -12,7 +12,53 @@ class TelegramFileStreamer:
         self.client = client
         self.file_id = file_id
         self.file_size = file_size
-        self.chunk_size = 1024 * 1024 # 1MB chunks
+        self.chunk_size = 2 * 1024 * 1024  # 2 MiB chunks
+
+    async def get_file_location(self):
+        # Decode the file_id to get the location
+        decoded = FileId.decode(self.file_id)
+        
+        # Create InputFileLocation manually from decoded FileId
+        from pyrogram.raw.types import InputDocumentFileLocation, InputPhotoFileLocation
+        
+        # Check the file type and create appropriate location
+        if decoded.file_type in [1, 2]:  # Photo
+            media_input_location = InputPhotoFileLocation(
+                id=decoded.media_id,
+                access_hash=decoded.access_hash,
+                file_reference=decoded.file_reference,
+                thumb_size=""
+            )
+        else:  # Document, Video, Audio, etc.
+            media_input_location = InputDocumentFileLocation(
+                id=decoded.media_id,
+                access_hash=decoded.access_hash,
+                file_reference=decoded.file_reference,
+                thumb_size=""
+            )
+        
+        return media_input_location
+
+    async def yield_chunks(self, start: int, end: int):
+        """
+        Stream file chunks using direct GetFile calls.
+        Handles DC migration by retrying requests.
+        Supports random access for fast seeking.
+import math
+import logging
+import asyncio
+from pyrogram import Client, utils
+from pyrogram.file_id import FileId
+from pyrogram.raw.functions.upload import GetFile
+from pyrogram.raw.types import InputFileLocation
+from pyrogram.errors import FileMigrate, FloodWait
+
+class TelegramFileStreamer:
+    def __init__(self, client: Client, file_id: str, file_size: int):
+        self.client = client
+        self.file_id = file_id
+        self.file_size = file_size
+        self.chunk_size = 2 * 1024 * 1024  # 2 MiB chunks
 
     async def get_file_location(self):
         # Decode the file_id to get the location
@@ -45,27 +91,29 @@ class TelegramFileStreamer:
         Handles DC migration by retrying requests.
         Supports random access for fast seeking.
         """
-        location = await self.get_file_location()
         
         # Telegram requires offset to be divisible by 4096 (4KB)
         current_offset = start
         
         while current_offset < end:
+            # Always get a fresh location (covers any DC migration)
+            location = await self.get_file_location()
+
             aligned_offset = (current_offset // 4096) * 4096
             gap = current_offset - aligned_offset
-            
+
             bytes_needed = min(self.chunk_size, end - current_offset)
             request_amount = gap + bytes_needed
-            
-            # Align request limit to 4096
-            if request_amount % 4096 != 0:
-                request_limit = math.ceil(request_amount / 4096) * 4096
-            else:
-                request_limit = request_amount
-            
-            # Safety cap 1MB + alignment
-            if request_limit > 1024 * 1024:
-                request_limit = 1024 * 1024
+
+            # Align request limit to 4096 bytes
+            request_limit = (
+                math.ceil(request_amount / 4096) * 4096
+                if request_amount % 4096 != 0
+                else request_amount
+            )
+            # Cap request size to chunk_size (now 2 MiB)
+            if request_limit > self.chunk_size:
+                request_limit = self.chunk_size
 
             retries = 5
             while retries > 0:
@@ -74,44 +122,46 @@ class TelegramFileStreamer:
                         GetFile(
                             location=location,
                             offset=aligned_offset,
-                            limit=request_limit
+                            limit=request_limit,
                         )
                     )
-                    
                     chunk = result.bytes
-                    
-                    if gap > 0:
+
+                    if gap:
                         chunk = chunk[gap:]
-                    
                     if len(chunk) > bytes_needed:
                         chunk = chunk[:bytes_needed]
-                    
+
                     if not chunk:
-                        # End of file reached unexpectedly
                         return
 
                     yield chunk
                     current_offset += len(chunk)
-                    break # Success, exit retry loop
-                    
+                    break  # success
+
                 except FileMigrate as e:
-                    logging.warning(f"DC Migration detected (DC {e.value}). Refreshing location and retrying...")
-                    # Refresh the InputFileLocation after migration
+                    logging.warning(
+                        f"DC Migration detected (DC {e.value}). Updating client DC and retrying..."
+                    )
+                    # Update client session DC if possible
+                    try:
+                        self.client.session.dc_id = e.value
+                    except Exception as sess_err:
+                        logging.error(f"Failed to set client DC: {sess_err}")
+                    # Refresh location for the new DC
                     location = await self.get_file_location()
-                    # Reset retries to allow fresh attempts
                     retries = 5
                     await asyncio.sleep(1)
                     continue
-                    
+
                 except FloodWait as e:
-                    logging.warning(f"FloodWait: {e.value} seconds. Sleeping...")
+                    logging.warning(f"FloodWait: sleeping {e.value}s")
                     await asyncio.sleep(e.value)
-                    # Don't decrement retries for FloodWait
                     continue
-                    
-                except Exception as e:
-                    logging.error(f"Fetch error at {current_offset}: {e}")
+
+                except Exception as exc:
+                    logging.error(f"GetFile error at offset {current_offset}: {exc}")
                     retries -= 1
                     await asyncio.sleep(1)
                     if retries == 0:
-                        raise e
+                        raise exc
