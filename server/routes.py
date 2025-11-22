@@ -22,6 +22,13 @@ async def stream_media(chat_id: int, message_id: int, request: Request):
     mime_type = getattr(media, "mime_type", "application/octet-stream")
     file_name = getattr(media, "file_name", "video.mp4")
 
+    # Fix MIME type for VLC if generic
+    if mime_type == "application/octet-stream" and file_name:
+        import mimetypes
+        guessed_type, _ = mimetypes.guess_type(file_name)
+        if guessed_type:
+            mime_type = guessed_type
+
     # Handle Range Header
     range_header = request.headers.get("range")
     start = 0
