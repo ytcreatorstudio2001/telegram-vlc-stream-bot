@@ -46,7 +46,7 @@ class TelegramFileStreamer:
         import tempfile, os
         try:
             # Download the file to a temporary location (only once per request)
-            temp_path = await self.client.download_media(self.file_id, file_name='')
+            temp_path = await self.client.download_media(self.file_id)
         except Exception as e:
             logging.error(f"Failed to download file {self.file_id}: {e}")
             raise e
