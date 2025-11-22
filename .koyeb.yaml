@@ -11,7 +11,7 @@ services:
     
     # Port configuration
     ports:
-      - port: 8080
+      - port: 8000
         protocol: http
     
     # Environment variables (will be overridden by Koyeb UI settings)
@@ -29,7 +29,7 @@ services:
     # Health check
     health_checks:
       - http:
-          port: 8080
+          port: 8000
           path: /
     
     # Scaling
