@@ -36,6 +36,7 @@ class TelegramFileStreamer:
             )
             
             # Loop until we have served the requested range
+            current = start
             last_log_time = 0
             while current < end:
                 # Check current file size
