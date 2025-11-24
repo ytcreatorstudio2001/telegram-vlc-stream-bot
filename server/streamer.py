@@ -97,20 +97,32 @@ class TelegramFileStreamer:
                     )
                     # Update client session DC if possible
                     try:
-                        # Update the storage DC ID so the new session uses it
+                        logging.info(f"DEBUG: Handling DC Migration to {e.value}")
+                        
+                        # Update client session DC
+                        self.client.session.dc_id = e.value
+                        logging.info("DEBUG: Updated session.dc_id")
+
+                        # Also update storage if available
                         if hasattr(self.client, 'storage'):
                             self.client.storage.dc_id = e.value
+                            logging.info("DEBUG: Updated storage.dc_id")
 
                         # Stop the current session
+                        logging.info("DEBUG: Stopping session...")
                         await self.client.session.stop()
+                        logging.info("DEBUG: Session stopped")
                         
-                        # Manually update the client's connection state since we bypassed client.stop()
+                        # Manually update the client's connection state
                         self.client.is_connected = False
+                        logging.info("DEBUG: Reset is_connected to False")
 
                         # Reconnect to the new DC
+                        logging.info("DEBUG: Reconnecting...")
                         await self.client.connect()
+                        logging.info("DEBUG: Reconnected successfully")
                     except Exception as sess_err:
-                        logging.error(f"Failed to handle DC migration: {sess_err}")
+                        logging.error(f"Failed to handle DC migration: {sess_err}", exc_info=True)
 
                     # Wait a bit before retrying
                     await asyncio.sleep(1)
