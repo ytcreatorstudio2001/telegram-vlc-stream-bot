@@ -97,16 +97,18 @@ class TelegramFileStreamer:
                     )
                     # Update client session DC if possible
                     try:
-                        # Change the client's DC settings and reconnect
-                        self.client.session.dc_id = e.value
+                        # Update the storage DC ID so the new session uses it
+                        if hasattr(self.client, 'storage'):
+                            self.client.storage.dc_id = e.value
 
                         # Stop the current session
                         await self.client.session.stop()
+                        
+                        # Manually update the client's connection state since we bypassed client.stop()
+                        self.client.is_connected = False
 
-                        # If we have access to the actual API instance, update it
-                        if hasattr(self.client, 'storage'):
-                            # Reinitialize the connection for the new DC
-                            await self.client.connect()
+                        # Reconnect to the new DC
+                        await self.client.connect()
                     except Exception as sess_err:
                         logging.error(f"Failed to handle DC migration: {sess_err}")
 
