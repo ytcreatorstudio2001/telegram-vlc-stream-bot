@@ -13,6 +13,11 @@ logger = logging.getLogger(__name__)
 @router.get("/stream/{chat_id}/{message_id}")
 async def stream_media(chat_id: int, message_id: int, request: Request):
     logger.info(f"Received stream request for Chat: {chat_id}, Message: {message_id}")
+    
+    if not bot.is_connected:
+        logger.warning("Bot is not connected yet. Returning 503.")
+        raise HTTPException(status_code=503, detail="Bot is starting up, please wait...")
+
     try:
         msg = await bot.get_messages(chat_id, message_id)
     except Exception as e:

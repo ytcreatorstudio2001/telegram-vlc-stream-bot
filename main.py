@@ -24,29 +24,35 @@ async def lifespan(app: FastAPI):
         print("ERROR: API_ID, API_HASH, or BOT_TOKEN not found in .env file.")
         print("Please fill in your Telegram API details in the .env file.")
     else:
-        from pyrogram.errors import FloodWait
         import asyncio
         
-        max_retries = 3
-        for attempt in range(max_retries):
-            try:
-                await bot.start()
-                print("Bot Started in FastAPI Loop")
-                break
-            except FloodWait as e:
-                wait_time = e.value
-                print(f"⚠️ FloodWait: Telegram requires a wait of {wait_time} seconds.")
-                print(f"This happens when there are too many login attempts.")
-                print(f"Waiting {wait_time} seconds before retry... (Attempt {attempt + 1}/{max_retries})")
-                await asyncio.sleep(wait_time)
-            except Exception as e:
-                print(f"❌ Failed to start bot: {e}")
-                if attempt < max_retries - 1:
-                    print(f"Retrying in 5 seconds... (Attempt {attempt + 1}/{max_retries})")
-                    await asyncio.sleep(5)
-                else:
-                    print("Max retries reached. Bot will not start.")
+        async def start_bot_background():
+            from pyrogram.errors import FloodWait
+            max_retries = 3
+            for attempt in range(max_retries):
+                try:
+                    logger.info(f"Attempting to start bot (Attempt {attempt + 1}/{max_retries})...")
+                    await bot.start()
+                    logger.info("Bot Started in Background Loop")
+                    print("Bot Started in Background Loop")
                     break
+                except FloodWait as e:
+                    wait_time = e.value
+                    logger.warning(f"⚠️ FloodWait: Telegram requires a wait of {wait_time} seconds.")
+                    print(f"Waiting {wait_time} seconds before retry...")
+                    await asyncio.sleep(wait_time)
+                except Exception as e:
+                    logger.error(f"❌ Failed to start bot: {e}")
+                    print(f"❌ Failed to start bot: {e}")
+                    if attempt < max_retries - 1:
+                        print(f"Retrying in 5 seconds...")
+                        await asyncio.sleep(5)
+                    else:
+                        print("Max retries reached. Bot will not start.")
+                        break
+
+        # Start bot in background so Uvicorn can start immediately
+        asyncio.create_task(start_bot_background())
     
     yield
     
