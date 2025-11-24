@@ -39,135 +39,136 @@ class TelegramFileStreamer:
         
         return media_input_location
 
+# Global pool for temporary clients to avoid repeated logins (FloodWait)
+temp_clients = {}
+import asyncio
+from collections import defaultdict
+dc_locks = defaultdict(asyncio.Lock)
+import os
+
     async def yield_chunks(self, start: int, end: int):
         # Stream file chunks using direct GetFile calls.
-        # Handles DC migration by retrying requests with a new client connected to the correct DC.
-        
-        from config import Config
-        from pyrogram import Client
-        
-        # We start with the main client
-        download_client = self.client
-        is_temp_client = False
+        # Handles DC migration by retrying requests.
+        # Supports random access for fast seeking.
 
         # Telegram requires offset to be divisible by 4096 (4KB)
         current_offset = start
+        
+        # Use the main client by default
+        download_client = self.client
+        is_temp_client = False
 
-        try:
-            while current_offset < end:
-                # Always get a fresh location (covers any DC migration)
+        while current_offset < end:
+            # Always get a fresh location (covers any DC migration)
+            try:
                 location = await self.get_file_location()
+            except Exception as e:
+                logging.error(f"Failed to get file location: {e}")
+                raise e
 
-                aligned_offset = (current_offset // 4096) * 4096
-                gap = current_offset - aligned_offset
+            aligned_offset = (current_offset // 4096) * 4096
+            gap = current_offset - aligned_offset
 
-                bytes_needed = min(self.chunk_size, end - current_offset)
-                request_amount = gap + bytes_needed
+            bytes_needed = min(self.chunk_size, end - current_offset)
+            request_amount = gap + bytes_needed
 
-                # Align request limit to 4096 bytes
-                request_limit = (
-                    math.ceil(request_amount / 4096) * 4096
-                    if request_amount % 4096 != 0
-                    else request_amount
-                )
-                # Cap request size to chunk_size
-                if request_limit > self.chunk_size:
-                    request_limit = self.chunk_size
+            # Align request limit to 4096 bytes
+            request_limit = (
+                math.ceil(request_amount / 4096) * 4096
+                if request_amount % 4096 != 0
+                else request_amount
+            )
+            # Cap request size to chunk_size (now 512 KiB)
+            if request_limit > self.chunk_size:
+                request_limit = self.chunk_size
 
-                retries = 5
-                while retries > 0:
-                    try:
-                        result = await download_client.invoke(
-                            GetFile(
-                                location=location,
-                                offset=aligned_offset,
-                                limit=request_limit,
-                            )
-                        )
-                        chunk = result.bytes
-
-                        if gap:
-                            chunk = chunk[gap:]
-                        if len(chunk) > bytes_needed:
-                            chunk = chunk[:bytes_needed]
-
-                        if not chunk:
-                            return
-
-                        yield chunk
-                        current_offset += len(chunk)
-                        break  # success
-
-                    except FileMigrate as e:
-                        logging.warning(f"DC Migration detected (DC {e.value}). Switching to temporary client...")
-                        
-                        # If we already have a temp client, stop it first
-                        if is_temp_client:
-                            await download_client.stop()
-                        
-                        # Create a new temporary client for this DC
-                        # We use a unique session name to avoid conflicts
-                        import time
-                        session_name = f"temp_dc_{e.value}_{int(time.time())}"
-                        
-                        new_client = Client(
-                            session_name,
-                            api_id=Config.API_ID,
-                            api_hash=Config.API_HASH,
-                            bot_token=Config.BOT_TOKEN,
-                            in_memory=True,
-                            no_updates=True
-                        )
-                        
-                        # Force the new client to connect to the target DC
-                        # We must open storage first to set the DC ID (since it's using FileStorage)
-                        await new_client.storage.open()
-                        await new_client.storage.dc_id(e.value)
-                        await new_client.storage.save()
-                        await new_client.storage.close()
-                        
-                        logging.info(f"DEBUG: Starting temp client on DC {e.value}...")
-                        try:
-                            await new_client.start()
-                        except TypeError as type_err:
-                            # Catch the specific "NoneType and bytes" error which happens due to race condition
-                            if "NoneType" in str(type_err):
-                                logging.warning("DEBUG: Caught TypeError during start (race condition). Retrying...")
-                                await new_client.stop()
-                                await new_client.start()
-                            else:
-                                raise type_err
-                        
-                        logging.info("DEBUG: Temp client started.")
-                        
-                        # Switch to the new client
-                        download_client = new_client
-                        is_temp_client = True
-                        
-                        # Refresh location for the new DC (although it should be the same)
-                        # location = await self.get_file_location() 
-                        # Actually, we might need to re-decode if the access_hash depends on context, 
-                        # but usually the location object is static.
-                        
-                        retries -= 1
-                        continue
-
-                    except FloodWait as e:
-                        logging.warning(f"FloodWait: sleeping {e.value}s")
-                        await asyncio.sleep(e.value)
-                        continue
-
-                    except Exception as exc:
-                        logging.error(f"GetFile error at offset {current_offset}: {exc}")
-                        retries -= 1
-                        await asyncio.sleep(1)
-                        if retries == 0:
-                            raise exc
-        finally:
-            # Cleanup temp client if used
-            if is_temp_client:
-                logging.info("DEBUG: Stopping temporary download client...")
+            retries = 5
+            while retries > 0:
                 try:
-                    await download_client.stop()
-                except Exception as e:
-                    logging.error(f"Error stopping temp client: {e}")
+                    result = await download_client.invoke(
+                        GetFile(
+                            location=location,
+                            offset=aligned_offset,
+                            limit=request_limit,
+                        )
+                    )
+                    chunk = result.bytes
+
+                    if gap:
+                        chunk = chunk[gap:]
+                    if len(chunk) > bytes_needed:
+                        chunk = chunk[:bytes_needed]
+
+                    if not chunk:
+                        return
+
+                    yield chunk
+                    current_offset += len(chunk)
+                    break  # success
+
+                except FileMigrate as e:
+                    logging.warning(
+                        f"DC Migration detected (DC {e.value}). Switching to persistent temp client..."
+                    )
+                    
+                    target_dc = e.value
+                    
+                    # Use a lock to ensure we only create/start the client once per DC
+                    async with dc_locks[target_dc]:
+                        if target_dc in temp_clients:
+                            logging.info(f"DEBUG: Reusing existing client for DC {target_dc}")
+                            download_client = temp_clients[target_dc]
+                            is_temp_client = True
+                        else:
+                            logging.info(f"DEBUG: Initializing new persistent client for DC {target_dc}...")
+                            
+                            # Use a stable session name to reuse auth (avoids FloodWait)
+                            session_name = f"persistent_dc_{target_dc}"
+                            
+                            from config import Config
+                            new_client = Client(
+                                session_name,
+                                api_id=Config.API_ID,
+                                api_hash=Config.API_HASH,
+                                bot_token=Config.BOT_TOKEN,
+                                workdir=".", # Use current directory for session files
+                                no_updates=True
+                            )
+                            
+                            # If session file doesn't exist, we must set the DC ID first
+                            if not os.path.exists(f"{session_name}.session"):
+                                logging.info(f"DEBUG: Setting DC ID {target_dc} for new session...")
+                                await new_client.storage.open()
+                                await new_client.storage.dc_id(target_dc)
+                                await new_client.storage.save()
+                                await new_client.storage.close()
+                            
+                            logging.info(f"DEBUG: Starting client for DC {target_dc}...")
+                            try:
+                                await new_client.start()
+                                temp_clients[target_dc] = new_client
+                                download_client = new_client
+                                is_temp_client = True
+                                logging.info(f"DEBUG: Client for DC {target_dc} started and cached.")
+                            except Exception as client_err:
+                                logging.error(f"Failed to start temp client: {client_err}")
+                                raise client_err
+
+                    # Wait a bit before retrying
+                    await asyncio.sleep(1)
+                    # Refresh location for the new DC
+                    location = await self.get_file_location()
+                    retries -= 1
+                    continue
+
+                except FloodWait as e:
+                    logging.warning(f"FloodWait: sleeping {e.value}s")
+                    await asyncio.sleep(e.value)
+                    continue
+
+                except Exception as exc:
+                    logging.error(f"GetFile error at offset {current_offset}: {exc}")
+                    retries -= 1
+                    await asyncio.sleep(1)
+                    if retries == 0:
+                        raise exc
