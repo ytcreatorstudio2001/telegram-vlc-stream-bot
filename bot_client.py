@@ -12,6 +12,7 @@ class Bot(Client):
             plugins=dict(root="plugins"),
             workdir="."
         )
+        self.boot_status = "Starting..."
 
     async def start(self):
         await super().start()

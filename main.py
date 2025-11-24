@@ -32,22 +32,27 @@ async def lifespan(app: FastAPI):
             for attempt in range(max_retries):
                 try:
                     logger.info(f"Attempting to start bot (Attempt {attempt + 1}/{max_retries})...")
+                    bot.boot_status = f"Connecting... (Attempt {attempt + 1})"
                     await bot.start()
+                    bot.boot_status = "Online"
                     logger.info("Bot Started in Background Loop")
                     print("Bot Started in Background Loop")
                     break
                 except FloodWait as e:
                     wait_time = e.value
+                    bot.boot_status = f"⚠️ FloodWait: Waiting {wait_time}s"
                     logger.warning(f"⚠️ FloodWait: Telegram requires a wait of {wait_time} seconds.")
                     print(f"Waiting {wait_time} seconds before retry...")
                     await asyncio.sleep(wait_time)
                 except Exception as e:
+                    bot.boot_status = f"❌ Error: {e}"
                     logger.error(f"❌ Failed to start bot: {e}")
                     print(f"❌ Failed to start bot: {e}")
                     if attempt < max_retries - 1:
                         print(f"Retrying in 5 seconds...")
                         await asyncio.sleep(5)
                     else:
+                        bot.boot_status = "❌ Failed to start (Max retries)"
                         print("Max retries reached. Bot will not start.")
                         break
 
