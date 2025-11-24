@@ -64,6 +64,11 @@ async def lifespan(app: FastAPI):
         print(f"Bot shutdown error (can be ignored): {e}")
 
 app = FastAPI(lifespan=lifespan)
+
+# Add AI Error Handler Middleware
+from server.error_handler import AIErrorMiddleware
+app.add_middleware(AIErrorMiddleware)
+
 app.include_router(router)
 
 if __name__ == "__main__":
