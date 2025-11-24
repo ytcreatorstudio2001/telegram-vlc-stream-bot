@@ -1,8 +1,20 @@
+import logging
 import uvicorn
 from fastapi import FastAPI
 from bot_client import bot
 from server.routes import router
 from config import Config
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    handlers=[
+        logging.FileHandler("bot.log"),
+        logging.StreamHandler()
+    ]
+)
+logger = logging.getLogger(__name__)
 
 from contextlib import asynccontextmanager
 

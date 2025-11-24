@@ -6,11 +6,17 @@ from server.streamer import TelegramFileStreamer
 
 router = APIRouter()
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 @router.get("/stream/{chat_id}/{message_id}")
 async def stream_media(chat_id: int, message_id: int, request: Request):
+    logger.info(f"Received stream request for Chat: {chat_id}, Message: {message_id}")
     try:
         msg = await bot.get_messages(chat_id, message_id)
-    except Exception:
+    except Exception as e:
+        logger.error(f"Failed to get message {message_id} from chat {chat_id}: {e}")
         raise HTTPException(status_code=404, detail="Message not found")
 
     if not msg or not msg.media:
