@@ -117,18 +117,31 @@ class TelegramFileStreamer:
                         self.client.is_connected = False
                         logging.info("DEBUG: Reset is_connected to False")
 
-                        # Reconnect to the new DC manually to ensure DC ID sticks
+                        # Reconnect to the new DC manually
                         logging.info("DEBUG: Manually loading session...")
                         await self.client.load_session()
                         
                         logging.info(f"DEBUG: Forcing session.dc_id to {e.value}")
                         self.client.session.dc_id = e.value
                         
+                        # Clear auth key to force generation of a new one for the new DC
+                        logging.info("DEBUG: Clearing session auth_key_id to force regeneration")
+                        self.client.session.auth_key_id = None
+                        
                         logging.info("DEBUG: Starting session...")
                         await self.client.session.start()
                         
                         self.client.is_connected = True
-                        logging.info("DEBUG: Reconnected successfully (Manual)")
+                        logging.info("DEBUG: Reconnected. Attempting to sign in...")
+                        
+                        # Re-authenticate the bot on the new DC
+                        try:
+                            await self.client.sign_in(bot_token=self.client.bot_token)
+                            logging.info("DEBUG: Bot signed in successfully on new DC")
+                        except Exception as auth_err:
+                            logging.warning(f"DEBUG: Sign in failed (might be already authorized?): {auth_err}")
+
+                        logging.info("DEBUG: DC Migration successful")
                     except Exception as sess_err:
                         logging.error(f"Failed to handle DC migration: {sess_err}", exc_info=True)
 
