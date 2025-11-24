@@ -117,10 +117,18 @@ class TelegramFileStreamer:
                         self.client.is_connected = False
                         logging.info("DEBUG: Reset is_connected to False")
 
-                        # Reconnect to the new DC
-                        logging.info("DEBUG: Reconnecting...")
-                        await self.client.connect()
-                        logging.info("DEBUG: Reconnected successfully")
+                        # Reconnect to the new DC manually to ensure DC ID sticks
+                        logging.info("DEBUG: Manually loading session...")
+                        await self.client.load_session()
+                        
+                        logging.info(f"DEBUG: Forcing session.dc_id to {e.value}")
+                        self.client.session.dc_id = e.value
+                        
+                        logging.info("DEBUG: Starting session...")
+                        await self.client.session.start()
+                        
+                        self.client.is_connected = True
+                        logging.info("DEBUG: Reconnected successfully (Manual)")
                     except Exception as sess_err:
                         logging.error(f"Failed to handle DC migration: {sess_err}", exc_info=True)
 
