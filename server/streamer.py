@@ -120,8 +120,11 @@ class TelegramFileStreamer:
                         )
                         
                         # Force the new client to connect to the target DC
-                        # We must set the DC ID in storage before starting
+                        # We must open storage first to set the DC ID (since it's using FileStorage)
+                        await new_client.storage.open()
                         await new_client.storage.dc_id(e.value)
+                        await new_client.storage.save()
+                        await new_client.storage.close()
                         
                         logging.info(f"DEBUG: Starting temp client on DC {e.value}...")
                         try:
