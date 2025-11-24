@@ -124,8 +124,18 @@ class TelegramFileStreamer:
                         await new_client.storage.dc_id(e.value)
                         
                         logging.info(f"DEBUG: Starting temp client on DC {e.value}...")
-                        await new_client.start()
-                        logging.info("DEBUG: Temp client started and authenticated.")
+                        try:
+                            await new_client.start()
+                        except TypeError as type_err:
+                            # Catch the specific "NoneType and bytes" error which happens due to race condition
+                            if "NoneType" in str(type_err):
+                                logging.warning("DEBUG: Caught TypeError during start (race condition). Retrying...")
+                                await new_client.stop()
+                                await new_client.start()
+                            else:
+                                raise type_err
+                        
+                        logging.info("DEBUG: Temp client started.")
                         
                         # Switch to the new client
                         download_client = new_client

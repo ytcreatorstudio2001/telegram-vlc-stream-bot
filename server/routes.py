@@ -69,8 +69,28 @@ async def stream_media(chat_id: int, message_id: int, request: Request):
         "Content-Disposition": f'inline; filename="{file_name}"'
     }
 
+    # Wrapper to catch errors during streaming
+    async def stream_generator():
+        try:
+            async for chunk in streamer.yield_chunks(start, end + 1):
+                yield chunk
+        except Exception as e:
+            import traceback
+            tb_str = "".join(traceback.format_exception(type(e), e, e.__traceback__))
+            error_msg = (
+                f"\n{'='*40}\n"
+                f"🚨 STREAMING ERROR 🚨\n"
+                f"{'='*40}\n"
+                f"❌ Error: {type(e).__name__}: {e}\n"
+                f"📜 Traceback:\n{tb_str}\n"
+                f"{'='*40}\n"
+            )
+            print(error_msg)
+            logging.error(error_msg)
+            raise e
+
     return StreamingResponse(
-        streamer.yield_chunks(start, end + 1),
+        stream_generator(),
         status_code=206 if range_header else 200,
         headers=headers,
         media_type=mime_type
