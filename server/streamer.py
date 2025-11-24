@@ -105,7 +105,7 @@ class TelegramFileStreamer:
 
                         # Also update storage if available
                         if hasattr(self.client, 'storage'):
-                            self.client.storage.dc_id = e.value
+                            await self.client.storage.dc_id(e.value)
                             logging.info("DEBUG: Updated storage.dc_id")
 
                         # Stop the current session
