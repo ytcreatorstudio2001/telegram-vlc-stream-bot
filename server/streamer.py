@@ -6,6 +6,12 @@ from pyrogram.file_id import FileId
 from pyrogram.raw.functions.upload import GetFile
 from pyrogram.raw.types import InputFileLocation
 from pyrogram.errors import FileMigrate, FloodWait
+from collections import defaultdict
+import os
+
+# Global pool for temporary clients to avoid repeated logins (FloodWait)
+temp_clients = {}
+dc_locks = defaultdict(asyncio.Lock)
 
 class TelegramFileStreamer:
     def __init__(self, client: Client, file_id: str, file_size: int):
@@ -38,13 +44,6 @@ class TelegramFileStreamer:
             )
         
         return media_input_location
-
-# Global pool for temporary clients to avoid repeated logins (FloodWait)
-temp_clients = {}
-import asyncio
-from collections import defaultdict
-dc_locks = defaultdict(asyncio.Lock)
-import os
 
     async def yield_chunks(self, start: int, end: int):
         # Stream file chunks using direct GetFile calls.
