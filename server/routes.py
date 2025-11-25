@@ -2,7 +2,7 @@ import re
 from fastapi import APIRouter, Request, HTTPException, Response
 from fastapi.responses import StreamingResponse
 from bot_client import bot
-from server.streamer_v2 import TelegramFileStreamer
+from server.streamer import TelegramFileStreamer
 
 router = APIRouter()
 
