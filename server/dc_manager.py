@@ -80,33 +80,6 @@ async def get_dc_client(dc_id: int) -> Client:
     if not os.path.exists(session_path):
         logger.info(f"Setting DC ID {dc_id} for new session")
         await client.storage.open()
-        await client.storage.dc_id(dc_id)
-        await client.storage.save()
-        await client.storage.close()
-
-    try:
-        await client.start()
-        logger.info(f"DC {dc_id} client started successfully")
-    except FloodWait as e:
-        # Record until when we must not try ImportBotAuthorization again
-        dc_flood_until[dc_id] = time.time() + e.value
-        logger.error(f"FloodWait on DC {dc_id}: wait {e.value} seconds")
-        
-        # Clean up client
-        try:
-            await client.stop()
-        except Exception:
-            pass
-            
-        raise RuntimeError(
-            f"FloodWait on DC {dc_id}: wait {e.value} seconds"
-        ) from e
-    except Exception as e:
-        logger.error(f"Failed to start DC {dc_id} client: {e}")
-        raise RuntimeError(f"Failed to start DC {dc_id} client: {e}") from e
-
-    # Cache the client
-    dc_clients[dc_id] = client
     return client
 
 
