@@ -126,7 +126,7 @@ class TelegramFileStreamer:
                 continue
             except FileMigrate as e:
                 # Handle DC migration with retries
-                max_migrate_attempts = 3
+                max_migrate_attempts = 5
                 migrate_attempt = 0
                 while migrate_attempt < max_migrate_attempts:
                     target_dc = e.value
