@@ -2,7 +2,7 @@ import re
 from fastapi import APIRouter, Request, HTTPException, Response
 from fastapi.responses import StreamingResponse
 from bot_client import bot
-from server.streamer import TelegramFileStreamer
+from server.streamer_v2 import TelegramFileStreamer
 
 router = APIRouter()
 
@@ -62,7 +62,8 @@ async def stream_media(chat_id: int, message_id: int, request: Request):
 
     content_length = end - start + 1
     
-    streamer = TelegramFileStreamer(bot, file_id, file_size)
+    # Use new modular streamer with chat_id and message_id for DC mapping
+    streamer = TelegramFileStreamer(chat_id, message_id, file_id, file_size)
     
     # Force linear streaming for now to prevent VLC seeking timeouts
     # We will re-enable seeking once linear playback is confirmed
