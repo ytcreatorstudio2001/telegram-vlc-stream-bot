@@ -20,7 +20,7 @@ os.makedirs(SESSION_DIR, exist_ok=True)
 dc_clients: Dict[int, Client] = {}  # dc_id -> Client
 dc_flood_until: Dict[int, float] = {}  # dc_id -> unix timestamp when FloodWait ends
 
-MAIN_DC_ID = 2  # Main bot DC (adjust if different)
+MAIN_DC_ID = 5  # Main bot DC (Observed from logs)
 
 async def get_main_client() -> Client:
     """Return the main client (single session, main DC).
@@ -61,18 +61,20 @@ async def get_dc_client(dc_id: int) -> Client:
         return dc_clients[dc_id]
 
     # Create new client for this DC
-    logger.info(f"Creating and starting client for DC {dc_id}")
+    # IMPORTANT: Do NOT provide bot_token, otherwise Pyrogram will try to sign in 
+    # and might auto-migrate back to the bot's home DC (e.g. DC 5), causing an infinite loop.
+    logger.info(f"Creating client for DC {dc_id}")
     client = Client(
-        name=f"persistent_dc_{dc_id}",
+        name=f"persistent_dc_{dc_id}_v2",
         api_id=Config.API_ID,
         api_hash=Config.API_HASH,
-        bot_token=Config.BOT_TOKEN,
+        # bot_token=Config.BOT_TOKEN, # Removed to prevent auto-migration
         workdir=SESSION_DIR,
         no_updates=True,
     )
 
     # Ensure the client session is bound to the target DC
-    session_path = os.path.join(SESSION_DIR, f"persistent_dc_{dc_id}.session")
+    session_path = os.path.join(SESSION_DIR, f"persistent_dc_{dc_id}_v2.session")
     if not os.path.exists(session_path):
         logger.info(f"Setting DC ID {dc_id} for new session")
         await client.storage.open()
@@ -80,29 +82,50 @@ async def get_dc_client(dc_id: int) -> Client:
         await client.storage.save()
         await client.storage.close()
 
-    # Attempt to start the client with retry logic
-    max_retries = 3
-    attempt = 0
-    while attempt < max_retries:
+    # Start the client (connects only, since no token provided)
+    # We use connect() instead of start() to have manual control over auth
+    try:
+        await client.connect()
+    except Exception as e:
+        logger.error(f"Failed to connect to DC {dc_id}: {e}")
+        raise RuntimeError(f"Failed to connect to DC {dc_id}: {e}")
+
+    # Check authorization
+    try:
+        await client.get_me()
+        logger.info(f"DC {dc_id} client already authorized")
+    except Exception:
+        logger.info(f"Authorizing DC {dc_id} client via ExportAuthorization")
         try:
-            await client.start()
-            logger.info(f"DC {dc_id} client started successfully")
-            break
+            # Get main client to export auth
+            main_client = await get_main_client()
+            if not main_client.is_connected:
+                # This might happen if called before main bot started, but unlikely in this flow
+                logger.warning("Main client not connected, attempting to start...")
+                await main_client.start()
+
+            # Export auth from main DC to target DC
+            from pyrogram.raw.functions.auth import ExportAuthorization, ImportAuthorization
+            
+            export_auth = await main_client.invoke(ExportAuthorization(dc_id=dc_id))
+            
+            # Import auth on target DC
+            await client.invoke(ImportAuthorization(
+                id=export_auth.id, 
+                bytes=export_auth.bytes
+            ))
+            logger.info(f"Successfully authorized on DC {dc_id}")
+            
         except FloodWait as e:
             wait_seconds = e.value
             dc_flood_until[dc_id] = time.time() + wait_seconds
-            logger.warning(f"FloodWait on DC {dc_id}: waiting {wait_seconds}s (attempt {attempt + 1})")
-            try:
-                await client.stop()
-            except Exception:
-                pass
-            await asyncio.sleep(wait_seconds)
-            attempt += 1
+            logger.error(f"FloodWait during auth export/import on DC {dc_id}: {wait_seconds}s")
+            await client.disconnect()
+            raise RuntimeError(f"FloodWait on DC {dc_id}: {wait_seconds}s")
         except Exception as e:
-            logger.error(f"Failed to start DC {dc_id} client: {e}")
-            raise RuntimeError(f"Failed to start DC {dc_id} client: {e}") from e
-    else:
-        raise RuntimeError(f"Exceeded max retries for DC {dc_id} client due to FloodWait")
+            logger.error(f"Failed to authorize on DC {dc_id}: {e}")
+            await client.disconnect()
+            raise RuntimeError(f"Failed to authorize on DC {dc_id}: {e}")
 
     dc_clients[dc_id] = client
     return client
