@@ -70,7 +70,7 @@ async def stream_media(chat_id: int, message_id: int, request: Request):
     headers = {
         "Content-Range": f"bytes {start}-{end}/{file_size}",
         "Accept-Ranges": "bytes",
-        "Content-Length": str(content_length),
+        # "Content-Length": str(content_length),
         "Content-Type": mime_type,
         "Content-Disposition": f'inline; filename="{file_name}"'
     }
