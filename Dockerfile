@@ -1,7 +1,7 @@
 FROM python:3.9-slim
 
 # Cache bust to force fresh build with latest code
-ENV CACHE_BUST=2025-11-25-08:07
+ENV CACHE_BUST=2025-11-25-08:32
 
 WORKDIR /app
 

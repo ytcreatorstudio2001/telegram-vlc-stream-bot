@@ -162,6 +162,18 @@ class TelegramFileStreamer:
                                 dc_clients[target_dc] = new_client
                                 self.download_client = new_client
                                 logging.info(f"DC {target_dc} client started and cached.")
+                            except FloodWait as flood_err:
+                                # Handle FloodWait gracefully - wait it out and retry
+                                wait_time = flood_err.value
+                                logging.warning(f"⚠️ FloodWait: Need to wait {wait_time} seconds before creating DC {target_dc} client")
+                                logging.info(f"Waiting {wait_time}s... (This is due to recent repeated deployments)")
+                                await asyncio.sleep(wait_time)
+                                logging.info(f"FloodWait over. Retrying DC {target_dc} client creation...")
+                                # Retry after waiting
+                                await new_client.start()
+                                dc_clients[target_dc] = new_client
+                                self.download_client = new_client
+                                logging.info(f"DC {target_dc} client started and cached after FloodWait.")
                             except Exception as client_err:
                                 logging.error(f"Failed to start DC {target_dc} client: {client_err}")
                                 raise client_err
