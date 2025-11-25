@@ -9,9 +9,12 @@ from pyrogram.errors import FileMigrate, FloodWait
 from collections import defaultdict
 import os
 
-# Global pool for temporary clients to avoid repeated logins (FloodWait)
-temp_clients = {}
+# Global registry: DC ID → Client
+dc_clients = {}
 dc_locks = defaultdict(asyncio.Lock)
+
+# Global mapping: file_id → DC ID (so we know which DC each file belongs to)
+file_dc_mapping = {}
 
 class TelegramFileStreamer:
     def __init__(self, client: Client, file_id: str, file_size: int):
@@ -19,10 +22,18 @@ class TelegramFileStreamer:
         self.file_id = file_id
         self.file_size = file_size
         self.chunk_size = 512 * 1024  # 512 KiB chunks to avoid LIMIT_INVALID errors
-        # Persist the download client across all chunk requests to avoid repeated DC migrations
-        self.download_client = client
+        
+        # Determine which client to use based on file_id mapping
+        if file_id in file_dc_mapping:
+            # We already know which DC this file is on
+            target_dc = file_dc_mapping[file_id]
+            self.download_client = dc_clients.get(target_dc, client)
+            logging.info(f"Using cached DC {target_dc} client for file {file_id[:20]}...")
+        else:
+            # First time seeing this file, use default client
+            self.download_client = client
+        
         self.is_temp_client = False
-        # Cache the file location to avoid repeated FileMigrate exceptions
         self.cached_location = None
 
     async def get_file_location(self):
@@ -110,20 +121,16 @@ class TelegramFileStreamer:
                     break  # success
 
                 except FileMigrate as e:
-                    logging.warning(
-                        f"DC Migration detected (DC {e.value}). Switching to persistent temp client..."
-                    )
-                    
                     target_dc = e.value
+                    logging.warning(f"DC Migration: File is on DC {target_dc}")
                     
                     # Use a lock to ensure we only create/start the client once per DC
                     async with dc_locks[target_dc]:
-                        if target_dc in temp_clients:
-                            logging.info(f"DEBUG: Reusing existing client for DC {target_dc}")
-                            self.download_client = temp_clients[target_dc]
-                            self.is_temp_client = True
+                        if target_dc in dc_clients:
+                            logging.info(f"Reusing existing DC {target_dc} client")
+                            self.download_client = dc_clients[target_dc]
                         else:
-                            logging.info(f"DEBUG: Initializing new persistent client for DC {target_dc}...")
+                            logging.info(f"Creating new client for DC {target_dc}...")
                             
                             # Use a stable session name to reuse auth (avoids FloodWait)
                             session_name = f"persistent_dc_{target_dc}"
@@ -143,25 +150,26 @@ class TelegramFileStreamer:
                             # If session file doesn't exist, we must set the DC ID first
                             session_path = os.path.join(SESSION_DIR, f"{session_name}.session")
                             if not os.path.exists(session_path):
-                                logging.info(f"DEBUG: Setting DC ID {target_dc} for new session...")
+                                logging.info(f"Setting DC ID {target_dc} for new session...")
                                 await new_client.storage.open()
                                 await new_client.storage.dc_id(target_dc)
                                 await new_client.storage.save()
                                 await new_client.storage.close()
                             
-                            logging.info(f"DEBUG: Starting client for DC {target_dc}...")
+                            logging.info(f"Starting client for DC {target_dc}...")
                             try:
                                 await new_client.start()
-                                temp_clients[target_dc] = new_client
+                                dc_clients[target_dc] = new_client
                                 self.download_client = new_client
-                                self.is_temp_client = True
-                                logging.info(f"DEBUG: Client for DC {target_dc} started and cached.")
+                                logging.info(f"DC {target_dc} client started and cached.")
                             except Exception as client_err:
-                                logging.error(f"Failed to start temp client: {client_err}")
+                                logging.error(f"Failed to start DC {target_dc} client: {client_err}")
                                 raise client_err
+                    
+                    # IMPORTANT: Save the mapping so future requests use the correct DC immediately
+                    file_dc_mapping[self.file_id] = target_dc
+                    logging.info(f"Saved mapping: file {self.file_id[:20]}... → DC {target_dc}")
 
-                    # Wait a bit before retrying
-                    await asyncio.sleep(1)
                     # Refresh location for the new DC and update cache
                     self.cached_location = await self.get_file_location()
                     location = self.cached_location
