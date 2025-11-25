@@ -68,7 +68,8 @@ async def get_dc_client(dc_id: int) -> Client:
     from pyrogram.storage import FileStorage
     
     # Manually create storage to set DC ID before Client init
-    storage = FileStorage(name=session_name, workdir=SESSION_DIR)
+    from pathlib import Path
+    storage = FileStorage(name=session_name, workdir=Path(SESSION_DIR))
     await storage.open()
     await storage.dc_id(dc_id)
     await storage.save()
