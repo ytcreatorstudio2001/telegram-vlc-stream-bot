@@ -19,6 +19,9 @@ class TelegramFileStreamer:
         self.file_id = file_id
         self.file_size = file_size
         self.chunk_size = 512 * 1024  # 512 KiB chunks to avoid LIMIT_INVALID errors
+        # Persist the download client across all chunk requests to avoid repeated DC migrations
+        self.download_client = client
+        self.is_temp_client = False
 
     async def get_file_location(self):
         # Decode the file_id to get the location
@@ -52,10 +55,6 @@ class TelegramFileStreamer:
 
         # Telegram requires offset to be divisible by 4096 (4KB)
         current_offset = start
-        
-        # Use the main client by default
-        download_client = self.client
-        is_temp_client = False
 
         while current_offset < end:
             # Always get a fresh location (covers any DC migration)
@@ -84,7 +83,7 @@ class TelegramFileStreamer:
             retries = 5
             while retries > 0:
                 try:
-                    result = await download_client.invoke(
+                    result = await self.download_client.invoke(
                         GetFile(
                             location=location,
                             offset=aligned_offset,
@@ -116,8 +115,8 @@ class TelegramFileStreamer:
                     async with dc_locks[target_dc]:
                         if target_dc in temp_clients:
                             logging.info(f"DEBUG: Reusing existing client for DC {target_dc}")
-                            download_client = temp_clients[target_dc]
-                            is_temp_client = True
+                            self.download_client = temp_clients[target_dc]
+                            self.is_temp_client = True
                         else:
                             logging.info(f"DEBUG: Initializing new persistent client for DC {target_dc}...")
                             
@@ -146,8 +145,8 @@ class TelegramFileStreamer:
                             try:
                                 await new_client.start()
                                 temp_clients[target_dc] = new_client
-                                download_client = new_client
-                                is_temp_client = True
+                                self.download_client = new_client
+                                self.is_temp_client = True
                                 logging.info(f"DEBUG: Client for DC {target_dc} started and cached.")
                             except Exception as client_err:
                                 logging.error(f"Failed to start temp client: {client_err}")
