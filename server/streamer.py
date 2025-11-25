@@ -128,18 +128,21 @@ class TelegramFileStreamer:
                             # Use a stable session name to reuse auth (avoids FloodWait)
                             session_name = f"persistent_dc_{target_dc}"
                             
+                            # Use persistent directory for sessions
+                            from bot_client import SESSION_DIR
                             from config import Config
                             new_client = Client(
                                 session_name,
                                 api_id=Config.API_ID,
                                 api_hash=Config.API_HASH,
                                 bot_token=Config.BOT_TOKEN,
-                                workdir=".", # Use current directory for session files
+                                workdir=SESSION_DIR,
                                 no_updates=True
                             )
                             
                             # If session file doesn't exist, we must set the DC ID first
-                            if not os.path.exists(f"{session_name}.session"):
+                            session_path = os.path.join(SESSION_DIR, f"{session_name}.session")
+                            if not os.path.exists(session_path):
                                 logging.info(f"DEBUG: Setting DC ID {target_dc} for new session...")
                                 await new_client.storage.open()
                                 await new_client.storage.dc_id(target_dc)

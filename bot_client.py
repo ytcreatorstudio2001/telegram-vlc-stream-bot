@@ -1,6 +1,11 @@
 from pyrogram import Client
 from pyrogram.storage import MemoryStorage
 from config import Config
+import os
+
+# Use persistent directory for sessions (survives deployments)
+SESSION_DIR = os.getenv("SESSION_DIR", "/app/sessions" if os.path.exists("/app/sessions") else ".")
+os.makedirs(SESSION_DIR, exist_ok=True)
 
 class Bot(Client):
     def __init__(self):
@@ -10,7 +15,7 @@ class Bot(Client):
             api_hash=Config.API_HASH,
             bot_token=Config.BOT_TOKEN,
             plugins=dict(root="plugins"),
-            workdir="."
+            workdir=SESSION_DIR
         )
         self.boot_status = "Starting..."
 
