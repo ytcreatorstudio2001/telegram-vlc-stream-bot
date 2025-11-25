@@ -22,6 +22,8 @@ class TelegramFileStreamer:
         # Persist the download client across all chunk requests to avoid repeated DC migrations
         self.download_client = client
         self.is_temp_client = False
+        # Cache the file location to avoid repeated FileMigrate exceptions
+        self.cached_location = None
 
     async def get_file_location(self):
         # Decode the file_id to get the location
@@ -57,12 +59,15 @@ class TelegramFileStreamer:
         current_offset = start
 
         while current_offset < end:
-            # Always get a fresh location (covers any DC migration)
-            try:
-                location = await self.get_file_location()
-            except Exception as e:
-                logging.error(f"Failed to get file location: {e}")
-                raise e
+            # Get file location (use cached if available)
+            if self.cached_location is None:
+                try:
+                    self.cached_location = await self.get_file_location()
+                except Exception as e:
+                    logging.error(f"Failed to get file location: {e}")
+                    raise e
+            
+            location = self.cached_location
 
             aligned_offset = (current_offset // 4096) * 4096
             gap = current_offset - aligned_offset
@@ -154,8 +159,9 @@ class TelegramFileStreamer:
 
                     # Wait a bit before retrying
                     await asyncio.sleep(1)
-                    # Refresh location for the new DC
-                    location = await self.get_file_location()
+                    # Refresh location for the new DC and update cache
+                    self.cached_location = await self.get_file_location()
+                    location = self.cached_location
                     retries -= 1
                     continue
 
