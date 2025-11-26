@@ -9,7 +9,7 @@ from pyrogram.raw.functions.upload import GetFile
 from pyrogram.raw.types import InputDocumentFileLocation, InputPhotoFileLocation
 from pyrogram.errors import FileMigrate, FloodWait
 
-from server.dc_manager import get_main_client, get_dc_client
+from server.dc_manager import get_main_client, get_dc_client, invalidate_dc_client
 from server.dc_mapping import get_file_dc, set_file_dc
 
 logger = logging.getLogger(__name__)
@@ -165,6 +165,8 @@ class TelegramFileStreamer:
                         logger.info(
                             f"Still migrating after attempt {migrate_attempt}, retrying..."
                         )
+                        if migrate_attempt >= 2:
+                            await invalidate_dc_client(target_dc)
                         await asyncio.sleep(0.5)
                         continue
                     except FloodWait as fw:

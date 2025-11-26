@@ -8,6 +8,8 @@ import asyncio
 from typing import Dict
 from pyrogram import Client
 from pyrogram.errors import FloodWait
+from pyrogram.raw.functions.auth import ExportAuthorization, ImportAuthorization
+from pathlib import Path
 from config import Config
 
 logger = logging.getLogger(__name__)
@@ -64,7 +66,7 @@ async def get_dc_client(dc_id: int) -> Client:
     logger.info(f"Creating client for DC {dc_id}")
     
     # 1. Pre-create session file with correct DC ID to force connection to that DC
-    session_name = f"persistent_dc_{dc_id}_v3" # Bump to v3 to be clean
+    session_name = f"persistent_dc_{dc_id}_v4" # Bump to v4 to be clean
     from pyrogram.storage import FileStorage
     
     # Manually create storage to set DC ID before Client init
@@ -80,7 +82,7 @@ async def get_dc_client(dc_id: int) -> Client:
         name=session_name,
         api_id=Config.API_ID,
         api_hash=Config.API_HASH,
-        workdir=SESSION_DIR,
+        workdir=Path(SESSION_DIR),
         no_updates=True,
         plugins=None, # Disable plugins for these sub-clients
     )
@@ -137,3 +139,13 @@ async def cleanup_dc_clients():
             logger.info(f"Stopped DC {dc_id} client")
         except Exception as e:
             logger.error(f"Error stopping DC {dc_id} client: {e}")
+
+async def invalidate_dc_client(dc_id: int):
+    """Remove a DC client from cache, forcing reconnection next time."""
+    if dc_id in dc_clients:
+        client = dc_clients.pop(dc_id)
+        try:
+            await client.stop()
+        except Exception:
+            pass
+        logger.warning(f"Invalidated and stopped cached client for DC {dc_id}")
