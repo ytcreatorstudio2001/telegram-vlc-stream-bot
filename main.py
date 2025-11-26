@@ -2,7 +2,7 @@ import logging
 import uvicorn
 from fastapi import FastAPI
 from bot_client import bot
-from server.routes import router
+from server.routes_improved import router
 from config import Config
 
 # Configure logging
