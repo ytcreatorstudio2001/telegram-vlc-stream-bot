@@ -8,3 +8,4 @@ venv/
 *.session
 *.session-journal
 work_dir/
+adv-file-sharing-bot/
