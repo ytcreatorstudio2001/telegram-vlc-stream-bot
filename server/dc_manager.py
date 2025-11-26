@@ -65,66 +65,37 @@ async def get_dc_client(dc_id: int) -> Client:
     # Create new client for this DC
     logger.info(f"Creating client for DC {dc_id}")
     
-    # 1. Pre-create session file with correct DC ID to force connection to that DC
-    session_name = f"persistent_dc_{dc_id}_v4" # Bump to v4 to be clean
-    from pyrogram.storage import FileStorage
+    # Use in-memory session for DC clients to avoid filesystem issues on Koyeb
+    # This is more reliable for temporary DC clients used only for file streaming
+    session_name = f":memory:"  # In-memory session
     
-    # Manually create storage to set DC ID before Client init
-    from pathlib import Path
-    storage = FileStorage(name=session_name, workdir=Path(SESSION_DIR))
-    await storage.open()
-    await storage.dc_id(dc_id)
-    await storage.save()
-    await storage.close()
-
-    # 2. Initialize Client
+    # Initialize Client with in_memory flag
     client = Client(
-        name=session_name,
+        name=f"dc_{dc_id}_client",
         api_id=Config.API_ID,
         api_hash=Config.API_HASH,
-        workdir=Path(SESSION_DIR),
+        bot_token=Config.BOT_TOKEN,  # Use bot token directly
+        in_memory=True,  # Don't persist session to disk
         no_updates=True,
-        plugins=None, # Disable plugins for these sub-clients
+        plugins=None,  # Disable plugins for these sub-clients
     )
 
-    # 3. Connect (should now connect to target DC)
+    # 3. Start the client (handles connection and authorization automatically)
     try:
-        await client.connect()
+        await client.start()
+        logger.info(f"Successfully started and authorized DC {dc_id} client")
+    except FloodWait as fw:
+        logger.error(f"FloodWait when starting DC {dc_id} client: {fw.value}s")
+        dc_flood_until[dc_id] = time.time() + fw.value
+        await client.stop()
+        raise RuntimeError(f"FloodWait for DC {dc_id}: {fw.value}s")
     except Exception as e:
-        logger.error(f"Failed to connect to DC {dc_id}: {e}")
-        raise RuntimeError(f"Failed to connect to DC {dc_id}: {e}")
-
-    # 4. Authorize
-    try:
-        await client.get_me()
-        logger.info(f"DC {dc_id} client already authorized")
-    except Exception:
-        logger.info(f"Authorizing DC {dc_id} client...")
-        # Try ExportAuthorization first (works for some bot setups)
+        logger.error(f"Failed to start DC {dc_id} client: {e}")
         try:
-            main_client = await get_main_client()
-            if not main_client.is_connected:
-                await main_client.start()
-
-            export_auth = await main_client.invoke(ExportAuthorization(dc_id=dc_id))
-            
-            await client.invoke(ImportAuthorization(
-                id=export_auth.id, 
-                bytes=export_auth.bytes
-            ))
-            logger.info(f"Successfully authorized on DC {dc_id} via ExportAuthorization")
-            
-        except (FloodWait, Exception) as e:
-            logger.warning(f"ExportAuthorization failed ({e}), trying bot token login...")
-            # Fallback: Login with bot token directly on this DC
-            # This works if the bot is allowed to be on this DC (which it is, for downloading)
-            try:
-                await client.sign_in_bot(Config.BOT_TOKEN)
-                logger.info(f"Successfully authorized on DC {dc_id} via Bot Token")
-            except Exception as login_err:
-                logger.error(f"All auth methods failed for DC {dc_id}: {login_err}")
-                await client.disconnect()
-                raise RuntimeError(f"All auth methods failed for DC {dc_id}: {login_err}")
+            await client.stop()
+        except:
+            pass
+        raise RuntimeError(f"Failed to start DC {dc_id} client: {e}")
 
     dc_clients[dc_id] = client
     return client
