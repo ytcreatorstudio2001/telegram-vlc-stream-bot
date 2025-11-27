@@ -61,6 +61,8 @@
 | ⛔ **No Limits** | Supports large files (2GB+) with ease. |
 | 🔐 **Secure** | Safe interaction with Telegram API. |
 | ☁️ **Easy Deploy** | Ready for Koyeb, Heroku, and VPS. |
+| 👮‍♂️ **Admin Panel** | Built-in dashboard to manage users & settings. |
+| 🗄️ **Database** | MongoDB support for persistent user data. |
 
 </div>
 
@@ -107,6 +109,9 @@ graph LR
 | `API_HASH` | Your Telegram API Hash | Get from [my.telegram.org](https://my.telegram.org) |
 | `BOT_TOKEN` | Your Bot Token | Get from [@BotFather](https://t.me/BotFather) |
 | `URL` | The public URL of your app | `https://your-app.koyeb.app` |
+| `ADMINS` | Admin User IDs (space separated) | `123456789 987654321` |
+| `DATABASE_URL` | MongoDB Connection String | `mongodb+srv://...` |
+| `FORCE_SUB_CHANNEL` | Force Subscribe Channel ID/Username | `@MyChannel` or `-100...` |
 
 </div>
 
@@ -164,6 +169,26 @@ ngrok http 8080
 <div align="center">
 
 **Supported Players:** VLC, MX Player, Kodi, MPV, and any player supporting HTTP streams
+
+</div>
+
+---
+
+## 👮‍♂️ Admin Panel
+
+<div align="center">
+
+The bot features a powerful admin dashboard to manage your bot easily.
+
+**Command:** `/admin` (Private Chat)
+
+| Feature | Description |
+| :--- | :--- |
+| 📊 **Stats** | View total user count. |
+| 📢 **Broadcast** | Send messages to all users. |
+| 🖼️ **Banners** | Manage welcome banners. |
+| 🔒 **Force Sub** | Check subscription settings. |
+| 🔄 **Control** | Restart bot remotely. |
 
 </div>
 
