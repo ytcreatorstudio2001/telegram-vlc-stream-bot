@@ -9,8 +9,9 @@ import re
 import json
 import base64
 import logging
+import random
 from pyrogram import Client, filters
-from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
+from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery, InputMediaPhoto
 from pyrogram.errors import FloodWait
 from config import Config
 from urllib.parse import quote_plus
@@ -67,8 +68,12 @@ def format_duration(seconds: int) -> str:
 
 @Client.on_message(filters.command("start"))
 async def start(client: Client, message: Message):
-    """Start command with beautiful animated welcome message."""
+    """Start command with minimal colorful welcome message."""
     logger.info(f"Received /start from {message.from_user.id}")
+    
+    # Random banner selection
+    banners = ["assets/banner.png", "assets/banner1.png", "assets/banner2.png", "assets/banner3.png"]
+    selected_banner = random.choice(banners)
     
     # Create inline keyboard buttons
     buttons = [
@@ -86,45 +91,25 @@ async def start(client: Client, message: Message):
         ]
     ]
     
+    # Minimal colorful welcome text
     welcome_text = (
-        "🎬 **Welcome to VLC Stream Bot!** 🎬\n\n"
-        "╔═══════════════════════╗\n"
-        "║  🚀 **Stream Instantly**  ║\n"
-        "║  📺 **No Downloads**      ║\n"
-        "║  ⚡ **Lightning Fast**    ║\n"
-        "╚═══════════════════════╝\n\n"
-        f"👋 **Hello {message.from_user.first_name}!**\n\n"
-        "I can help you stream Telegram media files directly to VLC or any media player!\n\n"
-        "**🎯 Quick Start:**\n"
+        "**🎬 VLC Stream Bot**\n\n"
+        f"👋 Hey **{message.from_user.first_name}**!\n\n"
+        "**Stream Telegram files instantly** 🚀\n"
+        "No downloads • Fast • Secure\n\n"
+        "**Quick Start:**\n"
+        "📤 Send any file → Get stream link\n"
+        "🎥 Open in VLC → Enjoy!\n\n"
+        "**Commands:**\n"
+        "`/stream` • `/batch` • `/help` • `/about`\n\n"
         "━━━━━━━━━━━━━━━━━━━━━━\n"
-        "1️⃣ Send me any video/audio file\n"
-        "2️⃣ Get instant streaming link\n"
-        "3️⃣ Open in VLC and enjoy!\n\n"
-        "**✨ Key Features:**\n"
-        "━━━━━━━━━━━━━━━━━━━━━━\n"
-        "✅ Direct streaming without download\n"
-        "✅ Seek/Resume support\n"
-        "✅ Batch link generation\n"
-        "✅ Universal player compatibility\n"
-        "✅ Handles large files (2GB+)\n"
-        "✅ Fast and secure\n\n"
-        "**📋 Available Commands:**\n"
-        "━━━━━━━━━━━━━━━━━━━━━━\n"
-        "• `/start` - Show this welcome message\n"
-        "• `/stream` - Reply to a file for stream link\n"
-        "• `/batch` - Generate multiple links\n"
-        "• `/help` - Detailed usage guide\n"
-        "• `/about` - About this bot\n\n"
-        "💡 **Tip:** Just send me a file to get started!\n\n"
-        "━━━━━━━━━━━━━━━━━━━━━━\n"
-        "_Powered by FastAPI & Pyrogram_\n"
-        "**© 2025 Akhil TG** • All Rights Reserved"
+        "_© 2025 Akhil TG_"
     )
     
-    # Send banner image with welcome message
+    # Send random banner with welcome message
     try:
-        await message.reply_animation(
-            animation="assets/banner.gif",
+        await message.reply_photo(
+            photo=selected_banner,
             caption=welcome_text,
             reply_markup=InlineKeyboardMarkup(buttons)
         )
@@ -425,7 +410,10 @@ async def callback_handler(client: Client, callback_query: CallbackQuery):
     back_button = [[InlineKeyboardButton("🔙 Back to Menu", callback_data="start")]]
     
     if data == "start":
-        # Show welcome message again
+        # Show welcome message again with random banner
+        banners = ["assets/banner.png", "assets/banner1.png", "assets/banner2.png", "assets/banner3.png"]
+        selected_banner = random.choice(banners)
+        
         buttons = [
             [
                 InlineKeyboardButton("📚 Help", callback_data="help"),
@@ -442,82 +430,42 @@ async def callback_handler(client: Client, callback_query: CallbackQuery):
         ]
         
         welcome_text = (
-            "🎬 **Welcome to VLC Stream Bot!** 🎬\n\n"
-            "╔═══════════════════════╗\n"
-            "║  🚀 **Stream Instantly**  ║\n"
-            "║  📺 **No Downloads**      ║\n"
-            "║  ⚡ **Lightning Fast**    ║\n"
-            "╚═══════════════════════╝\n\n"
-            f"👋 **Hello {callback_query.from_user.first_name}!**\n\n"
-            "I can help you stream Telegram media files directly to VLC or any media player!\n\n"
-            "**🎯 Quick Start:**\n"
+            "**🎬 VLC Stream Bot**\n\n"
+            f"👋 Hey **{callback_query.from_user.first_name}**!\n\n"
+            "**Stream Telegram files instantly** 🚀\n"
+            "No downloads • Fast • Secure\n\n"
+            "**Quick Start:**\n"
+            "📤 Send any file → Get stream link\n"
+            "🎥 Open in VLC → Enjoy!\n\n"
+            "**Commands:**\n"
+            "`/stream` • `/batch` • `/help` • `/about`\n\n"
             "━━━━━━━━━━━━━━━━━━━━━━\n"
-            "1️⃣ Send me any video/audio file\n"
-            "2️⃣ Get instant streaming link\n"
-            "3️⃣ Open in VLC and enjoy!\n\n"
-            "**✨ Key Features:**\n"
-            "━━━━━━━━━━━━━━━━━━━━━━\n"
-            "✅ Direct streaming without download\n"
-            "✅ Seek/Resume support\n"
-            "✅ Batch link generation\n"
-            "✅ Universal player compatibility\n"
-            "✅ Handles large files (2GB+)\n"
-            "✅ Fast and secure\n\n"
-            "**📋 Available Commands:**\n"
-            "━━━━━━━━━━━━━━━━━━━━━━\n"
-            "• `/start` - Show this welcome message\n"
-            "• `/stream` - Reply to a file for stream link\n"
-            "• `/batch` - Generate multiple links\n"
-            "• `/help` - Detailed usage guide\n"
-            "• `/about` - About this bot\n\n"
-            "💡 **Tip:** Just send me a file to get started!\n\n"
-            "━━━━━━━━━━━━━━━━━━━━━━\n"
-            "_Powered by FastAPI & Pyrogram_\n"
-            "**© 2025 Akhil TG** • All Rights Reserved"
+            "_© 2025 Akhil TG_"
         )
         
-        await callback_query.edit_message_caption(
-            caption=welcome_text,
+        await callback_query.edit_message_media(
+            media=InputMediaPhoto(
+                media=selected_banner,
+                caption=welcome_text
+            ),
             reply_markup=InlineKeyboardMarkup(buttons)
         )
     
     elif data == "help":
         help_text = (
-            "📚 **Detailed Help Guide** 📚\n\n"
-            "**🎯 How to Use This Bot:**\n"
-            "━━━━━━━━━━━━━━━━━━━━━━\n\n"
-            "**Method 1: Direct Upload** 📤\n"
-            "1. Send any media file to the bot\n"
-            "2. Receive instant streaming link\n"
-            "3. Copy the link and use it!\n\n"
-            "**Method 2: Using /stream** 🔗\n"
-            "1. Forward a file to the bot\n"
-            "2. Reply to that file with `/stream`\n"
-            "3. Get your streaming link\n\n"
-            "**Method 3: Batch Generation** 📦\n"
-            "1. Use `/batch <first_link> <last_link>`\n"
-            "2. Example:\n"
-            "   `/batch https://t.me/c/123/10 https://t.me/c/123/20`\n"
-            "3. Get links for all files in range\n\n"
-            "**📺 VLC Player Setup:**\n"
-            "━━━━━━━━━━━━━━━━━━━━━━\n"
-            "1. Open VLC Media Player\n"
-            "2. Click **Media** → **Open Network Stream**\n"
-            "3. Paste your streaming URL\n"
-            "4. Click **Play** and enjoy!\n\n"
-            "**🎬 Supported Formats:**\n"
-            "━━━━━━━━━━━━━━━━━━━━━━\n"
-            "✅ Videos: MP4, MKV, AVI, MOV, WMV\n"
-            "✅ Audio: MP3, FLAC, WAV, AAC, OGG\n"
-            "✅ Documents: Any file type\n\n"
-            "**💡 Pro Tips:**\n"
-            "━━━━━━━━━━━━━━━━━━━━━━\n"
-            "• You can seek/forward in videos\n"
-            "• Works on mobile players too\n"
-            "• No file size limits\n"
-            "• Links work on any device\n\n"
-            "━━━━━━━━━━━━━━━━━━━━━━\n"
-            "**© 2025 Akhil TG** • All Rights Reserved"
+            "📚 **Help Guide** 📚\n\n"
+            "**🎯 How to Use:**\n"
+            "1️⃣ Send any file → Get link instantly\n"
+            "2️⃣ Reply to file with `/stream`\n"
+            "3️⃣ Use `/batch <link1> <link2>` for multiple files\n\n"
+            "**📺 VLC Setup:**\n"
+            "Media → Open Network Stream → Paste URL → Play\n\n"
+            "**🎬 Supported:**\n"
+            "✅ Videos (MP4, MKV, AVI, etc.)\n"
+            "✅ Audio (MP3, FLAC, WAV, etc.)\n"
+            "✅ All file types\n\n"
+            "💡 **Tips:** Seek/forward works • No size limits\n\n"
+            "© 2025 Akhil TG"
         )
         
         await callback_query.edit_message_caption(
@@ -527,40 +475,22 @@ async def callback_handler(client: Client, callback_query: CallbackQuery):
     
     elif data == "about":
         about_text = (
-            "ℹ️ **About VLC Stream Bot** ℹ️\n\n"
-            "**🎬 What is This Bot?**\n"
-            "━━━━━━━━━━━━━━━━━━━━━━\n"
-            "This bot allows you to stream large media files from Telegram "
-            "directly to VLC or any media player without downloading the entire file. "
-            "Perfect for watching movies, listening to music, or accessing large files on the go!\n\n"
-            "**✨ Key Features:**\n"
-            "━━━━━━━━━━━━━━━━━━━━━━\n"
-            "🚀 Direct streaming without full download\n"
-            "⏯️ Seek/Resume support (HTTP Range)\n"
+            "ℹ️ **About** ℹ️\n\n"
+            "Stream Telegram files directly to VLC without downloading!\n\n"
+            "**✨ Features:**\n"
+            "🚀 Direct streaming\n"
+            "⏯️ Seek/Resume support\n"
             "📱 Universal compatibility\n"
-            "💾 Handles large files (2GB+)\n"
-            "⚡ Fast and efficient streaming\n"
-            "🔒 Secure - no data storage\n"
-            "📦 Batch link generation\n\n"
-            "**🛠️ Technology Stack:**\n"
-            "━━━━━━━━━━━━━━━━━━━━━━\n"
-            "• **Language:** Python 3.8+\n"
-            "• **Framework:** FastAPI\n"
-            "• **Library:** Pyrogram\n"
-            "• **Server:** Uvicorn\n"
-            "• **Deployment:** Koyeb/Docker\n\n"
-            "**📊 Bot Statistics:**\n"
-            "━━━━━━━━━━━━━━━━━━━━━━\n"
-            "• **Version:** 2.0.0\n"
-            f"• **Server:** `{Config.URL}`\n"
-            "• **Status:** 🟢 Online\n"
-            "• **Uptime:** 24/7\n\n"
-            "**⚠️ Disclaimer:**\n"
-            "━━━━━━━━━━━━━━━━━━━━━━\n"
-            "This bot is for personal use only. Please respect copyright laws "
-            "and only stream content you have the right to access.\n\n"
-            "━━━━━━━━━━━━━━━━━━━━━━\n"
-            "**© 2025 Akhil TG** • All Rights Reserved"
+            "💾 Large files (2GB+)\n"
+            "⚡ Fast & efficient\n"
+            "🔒 Secure - no storage\n"
+            "📦 Batch generation\n\n"
+            "**🛠️ Tech Stack:**\n"
+            "Python • FastAPI • Pyrogram • Uvicorn\n\n"
+            "**📊 Info:**\n"
+            f"Version: 2.0.0 • Server: {Config.URL}\n"
+            "Status: 🟢 Online • Uptime: 24/7\n\n"
+            "© 2025 Akhil TG"
         )
         
         await callback_query.edit_message_caption(
@@ -569,46 +499,30 @@ async def callback_handler(client: Client, callback_query: CallbackQuery):
         )
     
     elif data == "bot_info":
+        bot_me = await client.get_me()
         bot_info_text = (
-            "🤖 **Bot Information** 🤖\n\n"
-            "**📋 Technical Details:**\n"
-            "━━━━━━━━━━━━━━━━━━━━━━\n"
-            "• **Bot Name:** VLC Stream Bot\n"
-            "• **Username:** @" + (await client.get_me()).username + "\n"
-            "• **Bot ID:** `" + str((await client.get_me()).id) + "`\n"
-            "• **Version:** 2.0.0\n"
-            "• **Build:** Production\n"
-            "• **Status:** 🟢 Active\n\n"
-            "**🌐 Server Information:**\n"
-            "━━━━━━━━━━━━━━━━━━━━━━\n"
-            f"• **Base URL:** `{Config.URL}`\n"
-            "• **API Framework:** FastAPI\n"
-            "• **Web Server:** Uvicorn\n"
-            "• **Telegram Library:** Pyrogram\n"
-            "• **Python Version:** 3.8+\n\n"
+            "🤖 **Bot Info** 🤖\n\n"
+            f"**Name:** {bot_me.first_name}\n"
+            f"**Username:** @{bot_me.username}\n"
+            f"**ID:** `{bot_me.id}`\n"
+            f"**Version:** 2.0.0\n"
+            f"**Status:** 🟢 Active\n\n"
+            "**🌐 Server:**\n"
+            f"URL: `{Config.URL}`\n"
+            "Framework: FastAPI\n"
+            "Library: Pyrogram\n\n"
             "**⚙️ Capabilities:**\n"
-            "━━━━━━━━━━━━━━━━━━━━━━\n"
-            "✅ Stream video files\n"
-            "✅ Stream audio files\n"
-            "✅ Stream documents\n"
+            "✅ Video/Audio streaming\n"
             "✅ Batch processing\n"
             "✅ HTTP Range support\n"
-            "✅ Multi-DC support\n"
-            "✅ Session persistence\n\n"
+            "✅ Multi-DC support\n\n"
             "**📊 Performance:**\n"
-            "━━━━━━━━━━━━━━━━━━━━━━\n"
-            "• **Max File Size:** Unlimited\n"
-            "• **Concurrent Streams:** High\n"
-            "• **Response Time:** < 100ms\n"
-            "• **Uptime:** 99.9%\n\n"
+            "Max Size: Unlimited\n"
+            "Response: <100ms\n"
+            "Uptime: 99.9%\n\n"
             "**🔐 Security:**\n"
-            "━━━━━━━━━━━━━━━━━━━━━━\n"
-            "• No file storage\n"
-            "• Secure streaming\n"
-            "• Privacy protected\n"
-            "• No data logging\n\n"
-            "━━━━━━━━━━━━━━━━━━━━━━\n"
-            "**© 2025 Akhil TG** • All Rights Reserved"
+            "No storage • Secure • Private\n\n"
+            "© 2025 Akhil TG"
         )
         
         await callback_query.edit_message_caption(
@@ -626,50 +540,26 @@ async def callback_handler(client: Client, callback_query: CallbackQuery):
         ]
         
         owner_info_text = (
-            "👨‍💻 **Owner Information** 👨‍💻\n\n"
-            "**📝 Profile:**\n"
-            "━━━━━━━━━━━━━━━━━━━━━━\n"
-            "• **Name:** Akhil TG\n"
-            "• **Role:** Full Stack Developer\n"
-            "• **Expertise:** Python, Web Development\n"
-            "• **Location:** India 🇮🇳\n\n"
-            "**💼 Professional Skills:**\n"
-            "━━━━━━━━━━━━━━━━━━━━━━\n"
-            "🔹 **Backend Development:**\n"
-            "   • Python (FastAPI, Flask, Django)\n"
-            "   • Node.js, Express\n"
-            "   • RESTful APIs\n\n"
-            "🔹 **Frontend Development:**\n"
-            "   • React, Next.js\n"
-            "   • HTML, CSS, JavaScript\n"
-            "   • Responsive Design\n\n"
-            "🔹 **DevOps & Cloud:**\n"
-            "   • Docker, Kubernetes\n"
-            "   • AWS, Heroku, Koyeb\n"
-            "   • CI/CD Pipelines\n\n"
-            "🔹 **Telegram Bots:**\n"
-            "   • Pyrogram, Telethon\n"
-            "   • Bot Development\n"
-            "   • Automation Scripts\n\n"
+            "👨‍💻 **Owner Info** 👨‍💻\n\n"
+            "**Name:** Akhil TG\n"
+            "**Role:** Full Stack Developer\n"
+            "**Location:** India 🇮🇳\n\n"
+            "**💼 Skills:**\n"
+            "🔹 Backend: Python, FastAPI, Node.js\n"
+            "🔹 Frontend: React, Next.js\n"
+            "🔹 DevOps: Docker, AWS, Koyeb\n"
+            "🔹 Bots: Pyrogram, Telethon\n\n"
             "**🚀 Projects:**\n"
-            "━━━━━━━━━━━━━━━━━━━━━━\n"
-            "• VLC Stream Bot (This Bot)\n"
-            "• Various Telegram Bots\n"
-            "• Web Applications\n"
-            "• Open Source Contributions\n\n"
+            "• VLC Stream Bot\n"
+            "• Telegram Bots\n"
+            "• Web Apps\n"
+            "• Open Source\n\n"
             "**📫 Contact:**\n"
-            "━━━━━━━━━━━━━━━━━━━━━━\n"
-            "• **Telegram:** @akhil_tg\n"
-            "• **GitHub:** @ytcreatorstudio2001\n"
-            "• **Email:** Available on request\n\n"
+            "Telegram: @akhil_tg\n"
+            "GitHub: @ytcreatorstudio2001\n\n"
             "**⭐ Support:**\n"
-            "━━━━━━━━━━━━━━━━━━━━━━\n"
-            "If you like this bot, please:\n"
-            "• ⭐ Star the GitHub repository\n"
-            "• 📢 Share with friends\n"
-            "• 💬 Provide feedback\n\n"
-            "━━━━━━━━━━━━━━━━━━━━━━\n"
-            "**© 2025 Akhil TG** • All Rights Reserved\n"
+            "Star on GitHub • Share • Feedback\n\n"
+            "© 2025 Akhil TG\n"
             "_Made with ❤️ in India_"
         )
         
