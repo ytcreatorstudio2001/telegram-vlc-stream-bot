@@ -2,7 +2,7 @@
 
 <!-- Scrolling Banner -->
 <div style="width: 100%; overflow: hidden; height: 200px;">
-  <div style="display: inline-block; white-space: nowrap; animation: scroll-banner 30s linear infinite;">
+  <div style="white-space: nowrap; display: inline-block; animation: scroll-banner 20s linear infinite;">
     <img src="./assets/banner.gif" alt="Telegram VLC Stream Bot Banner" style="display: inline-block; height: 200px;">
     <img src="./assets/banner.gif" alt="Telegram VLC Stream Bot Banner" style="display: inline-block; height: 200px;">
   </div>
