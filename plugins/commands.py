@@ -210,13 +210,14 @@ async def stream_command(client: Client, message: Message):
 
 @Client.on_message(filters.private & (filters.document | filters.video | filters.audio))
 async def auto_stream(client: Client, message: Message):
-    """Automatically generate link for private files."""
-    logger.info(f"Received file from {message.from_user.id}")
+    """Automatically generate link for private files (sent or forwarded)."""
+    is_forwarded = message.forward_date is not None
+    logger.info(f"Received file from {message.from_user.id} (forwarded: {is_forwarded})")
     await generate_and_send_link(message, message)
 
 
 async def generate_and_send_link(reply_to: Message, media_msg: Message):
-    """Generate and send stream link with file info."""
+    """Generate and send stream link with beautiful formatting."""
     file_info = get_file_info(media_msg)
     
     if not file_info:
@@ -226,39 +227,58 @@ async def generate_and_send_link(reply_to: Message, media_msg: Message):
     # Generate stream link
     stream_link = f"{Config.URL}/stream/{media_msg.chat.id}/{media_msg.id}"
     file_name = file_info.get("file_name", "Unknown")
-    file_name_encoded = quote_plus(file_name)
+    file_size = file_info.get('file_size', 0)
+    duration = file_info.get("duration", 0)
+    mime_type = file_info.get("mime_type", "Unknown")
     
-    # Create inline buttons
+    # Determine file type emoji
+    file_type_emoji = "📄"
+    if "video" in mime_type.lower():
+        file_type_emoji = "🎬"
+    elif "audio" in mime_type.lower():
+        file_type_emoji = "🎵"
+    elif "image" in mime_type.lower():
+        file_type_emoji = "🖼️"
+    
+    # Create beautiful inline buttons
     buttons = [
         [
             InlineKeyboardButton("📥 Download", url=stream_link),
-            InlineKeyboardButton("▶️ Stream", url=stream_link)
+            InlineKeyboardButton("▶️ Stream in VLC", url=stream_link)
         ]
     ]
     
-    # Format message
+    # Beautiful formatted message with better visual hierarchy
     message_text = (
-        "✅ **Stream Link Generated!**\n\n"
-        f"📄 **File:** `{file_name}`\n"
-        f"📦 **Size:** `{format_file_size(file_info.get('file_size', 0))}`\n"
+        "╔═══════════════════════╗\n"
+        "║   ✨ **STREAM READY** ✨   ║\n"
+        "╚═══════════════════════╝\n\n"
+        f"{file_type_emoji} **File Information**\n"
+        f"┣━ � Name: `{file_name}`\n"
+        f"┣━ 📦 Size: `{format_file_size(file_size)}`\n"
     )
     
-    if file_info.get("duration", 0) > 0:
-        message_text += f"⏱️ **Duration:** `{format_duration(file_info['duration'])}`\n"
+    if duration > 0:
+        message_text += f"┣━ ⏱️ Duration: `{format_duration(duration)}`\n"
     
-    if file_info.get("mime_type") != "Unknown":
-        message_text += f"🎬 **Type:** `{file_info['mime_type']}`\n"
+    if mime_type != "Unknown":
+        message_text += f"┗━ 🎬 Type: `{mime_type}`\n"
+    else:
+        message_text += "┗━━━━━━━━━━━━━━━━━━━━\n"
     
     message_text += (
-        f"\n🔗 **Stream URL:**\n`{stream_link}`\n\n"
-        "**📺 How to use in VLC:**\n"
-        "1. Open VLC Media Player\n"
-        "2. Media → Open Network Stream\n"
-        "3. Paste the URL above\n"
-        "4. Click Play\n\n"
-        "💡 **Tip:** You can seek/forward in the video!\n\n"
+        f"\n🔗 **Stream URL**\n"
+        f"```\n{stream_link}\n```\n\n"
+        "📺 **Quick Start Guide**\n"
+        "┣━ **VLC**: Media → Network Stream → Paste URL\n"
+        "┣━ **Browser**: Click Download/Stream button\n"
+        "┗━ **Mobile**: Use MX Player or VLC\n\n"
+        "💡 **Features**\n"
+        "✅ Instant streaming • No download needed\n"
+        "✅ Seek/Forward support • Resume anytime\n"
+        "✅ Works on all devices • Fast & secure\n\n"
         "━━━━━━━━━━━━━━━━━━━━━━\n"
-        "_© 2025 Akhil TG - All Rights Reserved_"
+        "_Powered by VLC Stream Bot • © 2025 Akhil TG_"
     )
     
     await reply_to.reply_text(
