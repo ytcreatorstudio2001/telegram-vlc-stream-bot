@@ -120,8 +120,3 @@ graph LR
 
 If you find this project useful, please give it a star!
 
-<br>
-
-<div align="center">
-  <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&size=22&duration=2000&pause=1000&color=FFD700&center=true&vCenter=true&width=600&lines=Thank+you+for+visiting!;Happy+Streaming!+🍿" alt="Support Message" />
-</div>
