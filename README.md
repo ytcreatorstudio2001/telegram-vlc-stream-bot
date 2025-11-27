@@ -244,7 +244,9 @@ Contributions are always welcome! Here's how you can help:
 
   <br>
 
-  <img src="https://profile-counter.glitch.me/telegram-vlc-stream-bot/count.svg" alt="Visitor Count"/>
+  <a href="https://github.com/ytcreatorstudio2001/telegram-vlc-stream-bot">
+    <img src="https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fgithub.com%2Fytcreatorstudio2001%2Ftelegram-vlc-stream-bot&count_bg=%232CA5E0&title_bg=%23555555&icon=github.svg&icon_color=%23E7E7E7&title=Visitors&edge_flat=false" alt="Visitor Count"/>
+  </a>
 
 </div>
 
