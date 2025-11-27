@@ -15,6 +15,14 @@ class Config:
     PORT = int(os.getenv("PORT", "8080"))
     HOST = os.getenv("HOST", "0.0.0.0")
     URL = os.getenv("URL", "http://localhost:8080")
+    
+    # Admin Settings
+    ADMINS = [int(x) for x in os.getenv("ADMINS", "").split()] if os.getenv("ADMINS") else []
+    FORCE_SUB_CHANNEL = os.getenv("FORCE_SUB_CHANNEL", "") # Channel ID or Username
+    
+    # Database
+    DATABASE_URL = os.getenv("DATABASE_URL", "")
+    
     # Directory to store small thumbnails or temporary data if needed
     WORK_DIR = "work_dir"
 
