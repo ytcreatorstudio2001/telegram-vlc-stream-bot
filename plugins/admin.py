@@ -5,6 +5,7 @@ import asyncio
 import logging
 from pyrogram import Client, filters
 from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
+from pyrogram.errors import FloodWait, UserIsBlocked, InputUserDeactivated
 from config import Config
 from database import db
 
@@ -13,6 +14,9 @@ logger = logging.getLogger(__name__)
 # Fallback JSON storage if DB is not available
 import json
 USERS_FILE = "users.json"
+
+# Store broadcast state
+broadcast_state = {}
 
 def load_users_local():
     if os.path.exists(USERS_FILE):
@@ -43,6 +47,13 @@ async def get_users_count():
     else:
         return len(load_users_local())
 
+async def get_all_users():
+    """Get list of all user IDs"""
+    if db:
+        return await db.get_all_users()
+    else:
+        return list(load_users_local())
+
 # Admin Filter
 def is_admin(user_id):
     return user_id in Config.ADMINS
@@ -50,6 +61,7 @@ def is_admin(user_id):
 @Client.on_message(filters.command("admin") & filters.private)
 async def admin_panel(client: Client, message: Message):
     if not is_admin(message.from_user.id):
+        await message.reply_text("❌ You are not authorized to use this command.")
         return
     
     await show_admin_panel(message)
@@ -69,6 +81,10 @@ async def show_admin_panel(message: Message, is_edit=False):
         [
             InlineKeyboardButton("📢 Broadcast", callback_data="admin_broadcast"),
             InlineKeyboardButton("📊 Stats", callback_data="admin_stats")
+        ],
+        [
+            InlineKeyboardButton("👥 View Users", callback_data="admin_users"),
+            InlineKeyboardButton("🔍 Find User", callback_data="admin_find_user")
         ],
         [
             InlineKeyboardButton("🖼️ Change Banners", callback_data="admin_banners"),
@@ -98,56 +114,296 @@ async def admin_callbacks(client: Client, callback_query: CallbackQuery):
         await callback_query.answer(f"📊 Total Users: {users_count}", show_alert=True)
         
     elif data == "admin_broadcast":
+        broadcast_state[callback_query.from_user.id] = "waiting_for_message"
         await callback_query.edit_message_text(
             "📢 **Broadcast Message**\n\n"
-            "Reply to this message with the content you want to broadcast to all users.\n"
-            "Supports: Text, Photo, Video, Sticker, etc.",
+            "Send me the message you want to broadcast to all users.\n\n"
+            "**Supported:**\n"
+            "✅ Text messages\n"
+            "✅ Photos with captions\n"
+            "✅ Videos with captions\n"
+            "✅ Documents\n"
+            "✅ Stickers\n\n"
+            "Send /cancel to cancel the broadcast.",
             reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 Back", callback_data="back_to_admin")]])
         )
-        # Note: Actual broadcast logic needs a state machine or listener, 
-        # for simplicity we'll just show instructions here. 
-        # A full broadcast implementation requires more complex handling.
+        
+    elif data == "admin_users":
+        users = await get_all_users()
+        users_count = len(users)
+        
+        # Show first 20 users
+        user_list = "\n".join([f"• `{uid}`" for uid in users[:20]])
+        
+        text = (
+            f"👥 **User List** (Total: {users_count})\n\n"
+            f"{user_list}\n\n"
+        )
+        
+        if users_count > 20:
+            text += f"_Showing first 20 users. Total: {users_count}_"
+        
+        await callback_query.edit_message_text(
+            text,
+            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 Back", callback_data="back_to_admin")]])
+        )
+        
+    elif data == "admin_find_user":
+        broadcast_state[callback_query.from_user.id] = "waiting_for_user_id"
+        await callback_query.edit_message_text(
+            "🔍 **Find User**\n\n"
+            "Send me the User ID to get information.\n\n"
+            "Send /cancel to cancel.",
+            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 Back", callback_data="back_to_admin")]])
+        )
         
     elif data == "admin_banners":
+        # Check existing banners
+        banners_info = []
+        banner_files = ["banner.png", "banner1.png", "banner2.png", "banner3.png"]
+        
+        for banner in banner_files:
+            path = f"assets/{banner}"
+            if os.path.exists(path):
+                size = os.path.getsize(path) / 1024  # KB
+                banners_info.append(f"✅ `{banner}` ({size:.1f} KB)")
+            else:
+                banners_info.append(f"❌ `{banner}` (Missing)")
+        
+        broadcast_state[callback_query.from_user.id] = "waiting_for_banner"
         await callback_query.edit_message_text(
             "🖼️ **Banner Management**\n\n"
-            "To change banners, you need to replace the files in `assets/` folder.\n"
-            "Currently, this can only be done via file access.\n\n"
-            "**Current Banners:**\n"
-            "1. `banner.png`\n"
-            "2. `banner1.png`\n"
-            "3. `banner2.png`\n"
-            "4. `banner3.png`",
+            "**Current Banners:**\n" + "\n".join(banners_info) + "\n\n"
+            "**To update a banner:**\n"
+            "Send me a photo with caption:\n"
+            "`banner1` or `banner2` or `banner3` or `banner`\n\n"
+            "The photo will replace the corresponding banner.\n\n"
+            "Send /cancel to cancel.",
             reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 Back", callback_data="back_to_admin")]])
         )
         
     elif data == "admin_forcesub":
         status = Config.FORCE_SUB_CHANNEL if Config.FORCE_SUB_CHANNEL else "Disabled"
+        
+        # Try to get channel info if configured
+        channel_info = ""
+        if Config.FORCE_SUB_CHANNEL:
+            try:
+                chat = await client.get_chat(Config.FORCE_SUB_CHANNEL)
+                channel_info = f"\n**Channel Name:** {chat.title}\n**Members:** {chat.members_count if hasattr(chat, 'members_count') else 'N/A'}"
+            except:
+                channel_info = "\n⚠️ Unable to fetch channel info"
+        
         await callback_query.edit_message_text(
             f"🔒 **Force Subscription**\n\n"
-            f"Current Channel: `{status}`\n\n"
-            "To change this, update `FORCE_SUB_CHANNEL` in your environment variables or config.",
+            f"**Current Channel:** `{status}`{channel_info}\n\n"
+            "**How to change:**\n"
+            "Update `FORCE_SUB_CHANNEL` in your environment variables.\n\n"
+            "**Format:**\n"
+            "• Username: `@YourChannel`\n"
+            "• ID: `-100123456789`\n\n"
+            "**Note:** Make sure the bot is admin in the channel!",
             reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 Back", callback_data="back_to_admin")]])
         )
         
     elif data == "admin_restart":
-        await callback_query.answer("🔄 Restarting...", show_alert=True)
+        await callback_query.answer("🔄 Restarting bot...", show_alert=True)
+        await callback_query.edit_message_text("🔄 **Restarting bot...**\n\nPlease wait...")
+        await asyncio.sleep(2)
         os.execl(sys.executable, sys.executable, *sys.argv)
 
 @Client.on_callback_query(filters.regex("^back_to_admin$"))
 async def back_to_admin(client: Client, callback_query: CallbackQuery):
     if not is_admin(callback_query.from_user.id):
         return
+    # Clear any pending state
+    if callback_query.from_user.id in broadcast_state:
+        del broadcast_state[callback_query.from_user.id]
     await show_admin_panel(callback_query.message, is_edit=True)
 
 @Client.on_callback_query(filters.regex("^close_admin$"))
 async def close_admin(client: Client, callback_query: CallbackQuery):
+    if callback_query.from_user.id in broadcast_state:
+        del broadcast_state[callback_query.from_user.id]
     await callback_query.message.delete()
 
-# Hook into start command to save users
-# We need to modify the existing start command or add a handler that runs before it.
-# Since Pyrogram handlers run in groups, we can add a watcher.
+# Handle admin state-based messages
+@Client.on_message(filters.private & ~filters.command(["start", "help", "about", "stream", "batch", "admin", "cancel"]))
+async def handle_admin_input(client: Client, message: Message):
+    if not is_admin(message.from_user.id):
+        return
+    
+    user_id = message.from_user.id
+    
+    if user_id not in broadcast_state:
+        return
+    
+    state = broadcast_state[user_id]
+    
+    # Handle broadcast message
+    if state == "waiting_for_message":
+        del broadcast_state[user_id]
+        
+        # Confirm broadcast
+        confirm_text = (
+            "📢 **Confirm Broadcast**\n\n"
+            "Are you sure you want to send this message to all users?\n\n"
+            "This action cannot be undone!"
+        )
+        
+        buttons = [
+            [
+                InlineKeyboardButton("✅ Confirm", callback_data=f"confirm_broadcast_{message.id}"),
+                InlineKeyboardButton("❌ Cancel", callback_data="back_to_admin")
+            ]
+        ]
+        
+        await message.reply_text(
+            confirm_text,
+            reply_markup=InlineKeyboardMarkup(buttons)
+        )
+    
+    # Handle user ID search
+    elif state == "waiting_for_user_id":
+        del broadcast_state[user_id]
+        
+        try:
+            search_id = int(message.text.strip())
+            
+            # Check if user exists
+            users = await get_all_users()
+            
+            if search_id in users:
+                try:
+                    user = await client.get_users(search_id)
+                    
+                    user_info = (
+                        f"👤 **User Found**\n\n"
+                        f"**ID:** `{user.id}`\n"
+                        f"**Name:** {user.first_name} {user.last_name or ''}\n"
+                        f"**Username:** @{user.username if user.username else 'None'}\n"
+                        f"**Status:** {'Premium' if user.is_premium else 'Regular'}\n"
+                        f"**Bot:** {'Yes' if user.is_bot else 'No'}\n"
+                    )
+                    
+                    await message.reply_text(user_info)
+                except Exception as e:
+                    await message.reply_text(f"✅ User ID `{search_id}` exists in database.\n\n❌ But couldn't fetch details: {str(e)}")
+            else:
+                await message.reply_text(f"❌ User ID `{search_id}` not found in database.")
+        except ValueError:
+            await message.reply_text("❌ Invalid User ID. Please send a numeric ID.")
+    
+    # Handle banner upload
+    elif state == "waiting_for_banner":
+        del broadcast_state[user_id]
+        
+        if not message.photo:
+            await message.reply_text("❌ Please send a photo!")
+            return
+        
+        caption = message.caption.strip().lower() if message.caption else ""
+        
+        if caption not in ["banner", "banner1", "banner2", "banner3"]:
+            await message.reply_text(
+                "❌ Invalid banner name!\n\n"
+                "Please send photo with caption:\n"
+                "`banner` or `banner1` or `banner2` or `banner3`"
+            )
+            return
+        
+        # Download and save banner
+        try:
+            file_path = f"assets/{caption}.png"
+            await message.download(file_path)
+            
+            await message.reply_text(
+                f"✅ **Banner Updated!**\n\n"
+                f"Successfully updated `{caption}.png`\n\n"
+                f"The new banner will be used in the welcome message."
+            )
+        except Exception as e:
+            await message.reply_text(f"❌ Error saving banner: {str(e)}")
 
+@Client.on_message(filters.command("cancel") & filters.private)
+async def cancel_admin_action(client: Client, message: Message):
+    if not is_admin(message.from_user.id):
+        return
+    
+    if message.from_user.id in broadcast_state:
+        del broadcast_state[message.from_user.id]
+        await message.reply_text("✅ Action cancelled.")
+    else:
+        await message.reply_text("ℹ️ No active action to cancel.")
+
+# Handle broadcast confirmation
+@Client.on_callback_query(filters.regex("^confirm_broadcast_"))
+async def confirm_broadcast(client: Client, callback_query: CallbackQuery):
+    if not is_admin(callback_query.from_user.id):
+        await callback_query.answer("❌ You are not an admin!", show_alert=True)
+        return
+    
+    # Extract message ID
+    msg_id = int(callback_query.data.split("_")[2])
+    
+    # Get the message to broadcast
+    try:
+        broadcast_msg = await client.get_messages(callback_query.message.chat.id, msg_id)
+    except:
+        await callback_query.answer("❌ Message not found!", show_alert=True)
+        return
+    
+    await callback_query.edit_message_text("📢 **Broadcasting...**\n\nPlease wait...")
+    
+    # Get all users
+    users = await get_all_users()
+    
+    success = 0
+    failed = 0
+    blocked = 0
+    
+    for user_id in users:
+        try:
+            await broadcast_msg.copy(user_id)
+            success += 1
+            
+            # Update progress every 10 users
+            if success % 10 == 0:
+                await callback_query.edit_message_text(
+                    f"📢 **Broadcasting...**\n\n"
+                    f"✅ Success: {success}\n"
+                    f"❌ Failed: {failed}\n"
+                    f"🚫 Blocked: {blocked}\n"
+                    f"📊 Progress: {success + failed + blocked}/{len(users)}"
+                )
+            
+            await asyncio.sleep(0.05)  # Avoid flood
+            
+        except (UserIsBlocked, InputUserDeactivated):
+            blocked += 1
+        except FloodWait as e:
+            await asyncio.sleep(e.value)
+            try:
+                await broadcast_msg.copy(user_id)
+                success += 1
+            except:
+                failed += 1
+        except Exception as e:
+            failed += 1
+            logger.error(f"Broadcast error for user {user_id}: {e}")
+    
+    # Final report
+    await callback_query.edit_message_text(
+        f"✅ **Broadcast Complete!**\n\n"
+        f"📊 **Results:**\n"
+        f"✅ Success: {success}\n"
+        f"❌ Failed: {failed}\n"
+        f"🚫 Blocked: {blocked}\n"
+        f"📈 Total: {len(users)}\n\n"
+        f"Success Rate: {(success/len(users)*100):.1f}%"
+    )
+
+# Hook into start command to save users
 @Client.on_message(filters.command("start"), group=-1)
 async def log_user(client: Client, message: Message):
     await add_user(message.from_user.id)

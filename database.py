@@ -29,7 +29,11 @@ class Database:
         return count
 
     async def get_all_users(self):
-        return self.col.find({})
+        """Get list of all user IDs"""
+        users = []
+        async for user in self.col.find({}):
+            users.append(user['id'])
+        return users
 
     async def delete_user(self, user_id):
         await self.col.delete_many({'id': int(user_id)})
