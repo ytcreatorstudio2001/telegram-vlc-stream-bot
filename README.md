@@ -18,9 +18,15 @@
 
   <br>
 
-  ![GitHub stars](https://img.shields.io/github/stars/ytcreatorstudio2001/telegram-vlc-stream-bot?style=social)
-  ![GitHub forks](https://img.shields.io/github/forks/ytcreatorstudio2001/telegram-vlc-stream-bot?style=social)
-  ![GitHub watchers](https://img.shields.io/github/watchers/ytcreatorstudio2001/telegram-vlc-stream-bot?style=social)
+  <a href="https://github.com/ytcreatorstudio2001/telegram-vlc-stream-bot/stargazers">
+    <img src="https://img.shields.io/github/stars/ytcreatorstudio2001/telegram-vlc-stream-bot?style=social" alt="GitHub stars"/>
+  </a>
+  <a href="https://github.com/ytcreatorstudio2001/telegram-vlc-stream-bot/network/members">
+    <img src="https://img.shields.io/github/forks/ytcreatorstudio2001/telegram-vlc-stream-bot?style=social" alt="GitHub forks"/>
+  </a>
+  <a href="https://github.com/ytcreatorstudio2001/telegram-vlc-stream-bot/watchers">
+    <img src="https://img.shields.io/github/watchers/ytcreatorstudio2001/telegram-vlc-stream-bot?style=social" alt="GitHub watchers"/>
+  </a>
 
 </div>
 
@@ -213,7 +219,7 @@ Contributions are always welcome! Here's how you can help:
 
   <br>
 
-  ![Visitor Count](https://profile-counter.glitch.me/telegram-vlc-stream-bot/count.svg)
+  <img src="https://profile-counter.glitch.me/telegram-vlc-stream-bot/count.svg" alt="Visitor Count"/>
 
 </div>
 
