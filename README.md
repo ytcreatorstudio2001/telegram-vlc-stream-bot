@@ -1,6 +1,11 @@
 <div align="center">
 
-![Banner](./assets/banner.png)
+<!-- Rotating Banner - Refreshes on each page load -->
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./assets/banner1.png">
+  <source media="(prefers-color-scheme: light)" srcset="./assets/banner2.png">
+  <img alt="Telegram VLC Stream Bot" src="./assets/banner3.png" width="100%">
+</picture>
 
 # 🎬 Telegram VLC Stream Bot
 
