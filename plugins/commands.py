@@ -274,42 +274,31 @@ async def generate_and_send_link(reply_to: Message, media_msg: Message):
     # Create beautiful inline buttons
     buttons = [
         [
-            InlineKeyboardButton("📥 Download", url=stream_link),
-            InlineKeyboardButton("▶️ Stream in VLC", url=stream_link)
+            InlineKeyboardButton("▶️ Stream Now", url=stream_link),
+            InlineKeyboardButton("📥 Download", url=stream_link)
+        ],
+        [
+            InlineKeyboardButton("📋 Copy Link", callback_data=f"copy_{media_msg.chat.id}_{media_msg.id}")
         ]
     ]
     
-    # Beautiful formatted message with better visual hierarchy
+    # Colorful & Premium Design
     message_text = (
-        "╔═══════════════════════╗\n"
-        "║   ✨ **STREAM READY** ✨   ║\n"
-        "╚═══════════════════════╝\n\n"
-        f"{file_type_emoji} **File Information**\n"
-        f"┣━ � Name: `{file_name}`\n"
-        f"┣━ 📦 Size: `{format_file_size(file_size)}`\n"
+        f"╭━━ ⚡ **STREAM READY** ⚡ ━━╮\n\n"
+        f"🎬 **{file_name}**\n\n"
+        f"� **Size:** `{format_file_size(file_size)}`"
     )
     
     if duration > 0:
-        message_text += f"┣━ ⏱️ Duration: `{format_duration(duration)}`\n"
-    
-    if mime_type != "Unknown":
-        message_text += f"┗━ 🎬 Type: `{mime_type}`\n"
-    else:
-        message_text += "┗━━━━━━━━━━━━━━━━━━━━\n"
+        message_text += f"  |  ⏳ `{format_duration(duration)}`"
     
     message_text += (
-        f"\n🔗 **Stream URL**\n"
-        f"```\n{stream_link}\n```\n\n"
-        "📺 **Quick Start Guide**\n"
-        "┣━ **VLC**: Media → Network Stream → Paste URL\n"
-        "┣━ **Browser**: Click Download/Stream button\n"
-        "┗━ **Mobile**: Use MX Player or VLC\n\n"
-        "💡 **Features**\n"
-        "✅ Instant streaming • No download needed\n"
-        "✅ Seek/Forward support • Resume anytime\n"
-        "✅ Works on all devices • Fast & secure\n\n"
-        "━━━━━━━━━━━━━━━━━━━━━━\n"
-        "_Powered by VLC Stream Bot • © 2025 Akhil TG_"
+        f"\n\n🔗 **YOUR LINK** _(Tap to copy)_\n"
+        f"━━━━━━━━━━━━━━━━━━━━\n"
+        f"`{stream_link}`\n"
+        f"━━━━━━━━━━━━━━━━━━━━\n\n"
+        f"⚠️ _Note: Allow 10-15s for buffer_\n\n"
+        f"╰━━ 🚀 **ENJOY WATCHING** 🚀 ━━╯"
     )
     
     await reply_to.reply_text(
@@ -467,6 +456,23 @@ async def callback_handler(client: Client, callback_query: CallbackQuery):
     # Back button
     back_button = [[InlineKeyboardButton("🔙 Back to Menu", callback_data="start")]]
     
+    if data.startswith("copy_"):
+        try:
+            _, chat_id, msg_id = data.split("_")
+            stream_link = f"{Config.URL}/stream/{chat_id}/{msg_id}"
+            
+            await callback_query.answer("🔗 Link generated!", show_alert=False)
+            
+            await callback_query.message.reply_text(
+                f"**Here is your stream link:**\n\n`{stream_link}`",
+                quote=True,
+                disable_web_page_preview=True
+            )
+        except Exception as e:
+            logger.error(f"Copy link error: {e}")
+            await callback_query.answer("❌ Error generating link", show_alert=True)
+        return
+
     if data == "start":
         # Show welcome message again with random banner
         banners = ["assets/banner.png", "assets/banner1.png", "assets/banner2.png", "assets/banner3.png"]
