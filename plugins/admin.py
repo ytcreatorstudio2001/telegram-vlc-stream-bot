@@ -259,8 +259,12 @@ async def close_admin(client: Client, callback_query: CallbackQuery):
         del broadcast_state[callback_query.from_user.id]
     await callback_query.message.delete()
 
-# Handle admin state-based messages
-@Client.on_message(filters.private & ~filters.command(["start", "help", "about", "stream", "batch", "admin", "cancel"]))
+# Handle admin state-based messages (exclude media files for auto_stream)
+@Client.on_message(
+    filters.private & 
+    ~filters.command(["start", "help", "about", "stream", "batch", "admin", "cancel"]) &
+    ~filters.document & ~filters.video & ~filters.audio  # Don't catch media files
+)
 async def handle_admin_input(client: Client, message: Message):
     if not is_admin(message.from_user.id):
         return
