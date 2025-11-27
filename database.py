@@ -104,7 +104,7 @@ class Database:
             # Use projection to only fetch IDs for speed
             async for user in self.col.find({}, {'id': 1, '_id': 0}):
                 users.append(user['id'])
-            return users
+            return list(set(users))
         except Exception as e:
             logger.error(f"Error getting all users from MongoDB: {e}")
             return []

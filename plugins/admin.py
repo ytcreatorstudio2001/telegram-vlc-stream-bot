@@ -34,9 +34,10 @@ def save_user_local(user_id):
         with open(USERS_FILE, "w") as f:
             json.dump(list(users), f)
 
-async def add_user(user_id, user_obj=None):
+async def add_user(user_id, user_obj=None, client=None):
     """Add user without blocking - runs in background"""
     try:
+        is_new = False
         if db:
             # Prepare user data from user object
             user_data = None
@@ -49,11 +50,28 @@ async def add_user(user_id, user_obj=None):
                     'language_code': getattr(user_obj, 'language_code', None)
                 }
             
-            # Don't check if user exists first - just try to add
-            # This is faster and MongoDB will handle duplicates
-            await db.add_user(user_id, user_data)
+            # Try to add user
+            if await db.add_user(user_id, user_data):
+                is_new = True
         else:
-            save_user_local(user_id)
+            if user_id not in load_users_local():
+                save_user_local(user_id)
+                is_new = True
+        
+        # Log new user if configured
+        if is_new and client and Config.LOG_CHANNEL and user_obj:
+            try:
+                log_text = (
+                    "**#NEW_USER**\n\n"
+                    f"**User:** [{user_obj.first_name}](tg://user?id={user_id})\n"
+                    f"**ID:** `{user_id}`\n"
+                    f"**Username:** @{user_obj.username if user_obj.username else 'None'}\n"
+                    f"**Language:** {getattr(user_obj, 'language_code', 'N/A')}"
+                )
+                await client.send_message(Config.LOG_CHANNEL, log_text)
+            except Exception as e:
+                logger.error(f"Error sending new user log: {e}")
+                
     except Exception as e:
         # Only log non-duplicate errors
         if "duplicate" not in str(e).lower():
@@ -728,4 +746,4 @@ async def confirm_broadcast(client: Client, callback_query: CallbackQuery):
 @Client.on_message(filters.command("start"), group=-1)
 async def log_user(client: Client, message: Message):
     # Run user tracking in background without blocking the response
-    asyncio.create_task(add_user(message.from_user.id, message.from_user))
+    asyncio.create_task(add_user(message.from_user.id, message.from_user, client))

@@ -112,6 +112,7 @@ graph LR
 | `ADMINS` | Admin User IDs (space separated) | `123456789 987654321` |
 | `DATABASE_URL` | MongoDB Connection String | `mongodb+srv://...` |
 | `FORCE_SUB_CHANNEL` | Force Subscribe Channel ID/Username | `@MyChannel` or `-100...` |
+| `LOG_CHANNEL` | Channel ID for Logs | `-100xxxxxxx` |
 
 </div>
 

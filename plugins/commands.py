@@ -240,6 +240,21 @@ async def generate_and_send_link(reply_to: Message, media_msg: Message):
         await db.increment_streams(reply_to.from_user.id)
         await db.increment_files(reply_to.from_user.id)
     
+    # Log to channel
+    if Config.LOG_CHANNEL:
+        try:
+            log_text = (
+                "**#NEW_FILE_REQUEST**\n\n"
+                f"**User:** [{reply_to.from_user.first_name}](tg://user?id={reply_to.from_user.id})\n"
+                f"**ID:** `{reply_to.from_user.id}`\n"
+                f"**File Name:** `{file_info.get('file_name', 'Unknown')}`\n"
+                f"**File Size:** `{format_file_size(file_info.get('file_size', 0))}`\n"
+                f"**Mime Type:** `{file_info.get('mime_type', 'Unknown')}`"
+            )
+            await reply_to._client.send_message(Config.LOG_CHANNEL, log_text)
+        except Exception as e:
+            logger.error(f"Error sending log: {e}")
+    
     # Generate stream link
     stream_link = f"{Config.URL}/stream/{media_msg.chat.id}/{media_msg.id}"
     file_name = file_info.get("file_name", "Unknown")

@@ -19,6 +19,7 @@ class Config:
     # Admin Settings
     ADMINS = [int(x) for x in os.getenv("ADMINS", "").split()] if os.getenv("ADMINS") else []
     FORCE_SUB_CHANNEL = os.getenv("FORCE_SUB_CHANNEL", "") # Channel ID or Username
+    LOG_CHANNEL = int(os.getenv("LOG_CHANNEL", "0")) # Log Channel ID
     
     # Database
     DATABASE_URL = os.getenv("DATABASE_URL", "")
