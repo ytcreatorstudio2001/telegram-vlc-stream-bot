@@ -244,7 +244,9 @@ Contributions are always welcome! Here's how you can help:
 
   <br>
 
-  ![Visitor Count](https://komarev.com/ghpvc/?username=ytcreatorstudio2001-telegram-vlc-stream-bot&label=Visitors&color=2CA5E0&style=for-the-badge)
+  <a href="https://hits.sh/github.com/ytcreatorstudio2001/telegram-vlc-stream-bot/">
+    <img src="https://hits.sh/github.com/ytcreatorstudio2001/telegram-vlc-stream-bot.svg?style=for-the-badge&label=Visitors&color=2CA5E0" alt="Hits"/>
+  </a>
 
 </div>
 
