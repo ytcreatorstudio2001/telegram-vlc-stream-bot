@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -14,7 +15,7 @@
             min-height: 100vh;
             background: transparent;
         }
-        
+
         .banner-container {
             position: relative;
             width: 100%;
@@ -22,7 +23,7 @@
             aspect-ratio: 4 / 3;
             overflow: hidden;
         }
-        
+
         .banner-image {
             position: absolute;
             top: 0;
@@ -33,31 +34,33 @@
             opacity: 0;
             transition: opacity 1s ease-in-out;
         }
-        
+
         .banner-image.active {
             opacity: 1;
         }
     </style>
 </head>
+
 <body>
     <div class="banner-container">
         <img src="./banner1.png" alt="Banner 1" class="banner-image active">
         <img src="./banner2.png" alt="Banner 2" class="banner-image">
         <img src="./banner3.png" alt="Banner 3" class="banner-image">
     </div>
-    
+
     <script>
         const images = document.querySelectorAll('.banner-image');
         let currentIndex = 0;
-        
+
         function rotateBanner() {
             images[currentIndex].classList.remove('active');
             currentIndex = (currentIndex + 1) % images.length;
             images[currentIndex].classList.add('active');
         }
-        
-        // Rotate every 3 seconds
-        setInterval(rotateBanner, 3000);
+
+        // Rotate every 5 seconds
+        setInterval(rotateBanner, 5000);
     </script>
 </body>
+
 </html>

@@ -17,7 +17,7 @@
 </p>
 
 <p align="center">
-  <strong>Stream large media files from Telegram directly to VLC without downloading!</strong>
+  <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&size=22&duration=3000&pause=1000&color=00D9FF&center=true&vCenter=true&multiline=true&repeat=true&width=800&height=100&lines=Stream+Large+Media+Files+from+Telegram;Directly+to+VLC+Without+Downloading!;Fast+%E2%9A%A1+Secure+%F0%9F%94%92+Efficient+%F0%9F%9A%80" alt="Typing SVG" />
 </p>
 
 <p align="center">
@@ -44,6 +44,21 @@
 | 💾 **Large File Support** | Handles files 2GB+ with ease |
 | ⚡ **Fast & Efficient** | Built with FastAPI + Uvicorn + Pyrogram |
 | 🔒 **Secure** | No data storage, direct streaming only |
+
+</div>
+
+---
+
+<div align="center">
+
+## 🤖 About This Bot
+
+<img src="https://readme-typing-svg.demolab.com?font=Fira+Code&size=18&duration=2000&pause=500&color=F75C7E&center=true&vCenter=true&multiline=true&repeat=true&width=700&height=120&lines=%F0%9F%8E%AC+Your+Personal+Telegram+Media+Streamer;%E2%9A%A1+Lightning+Fast+%7C+%F0%9F%94%92+100%25+Secure;%F0%9F%93%B1+Works+on+Any+Device;%F0%9F%8E%AF+No+Downloads+%7C+Direct+Streaming" alt="About Bot" />
+
+<p style="font-size: 16px; color: #888;">
+This bot transforms how you consume media from Telegram. No more waiting for downloads!<br/>
+Just send a file, get a link, and start streaming instantly in VLC or any media player.
+</p>
 
 </div>
 
@@ -105,11 +120,7 @@
    - Paste the URL
    - Click `Play` and enjoy! 🎉
 
-<div align="center">
 
-![Demo](https://media.giphy.com/media/3o7TKSjRrfIPjeiVyg/giphy.gif)
-
-</div>
 
 ---
 
@@ -243,11 +254,14 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 <div align="center">
 
-**© 2025 Akhil TG. All Rights Reserved.**
+<img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=600&size=28&duration=3000&pause=1000&color=00D9FF&center=true&vCenter=true&width=600&lines=%F0%9F%91%A8%E2%80%8D%F0%9F%92%BB+Created+by+Akhil+TG;%E2%9C%A8+Full+Stack+Developer;%F0%9F%9A%80+Open+Source+Enthusiast" alt="Developer" />
 
-Created with ❤️ by [Akhil TG](https://github.com/yourusername)
+<br/>
 
-<p>
+<img src="https://readme-typing-svg.demolab.com?font=Fira+Code&size=20&duration=4000&pause=1000&color=F7B731&center=true&vCenter=true&multiline=true&repeat=true&width=700&height=80&lines=%C2%A9+2025+Akhil+TG+-+All+Rights+Reserved;Made+with+%E2%9D%A4%EF%B8%8F+for+the+Telegram+Community" alt="Copyright" />
+
+<br/>
+<br/><p>
   <a href="https://github.com/yourusername">
     <img src="https://img.shields.io/badge/GitHub-Follow-black?style=for-the-badge&logo=github" alt="GitHub"/>
   </a>
@@ -258,12 +272,12 @@ Created with ❤️ by [Akhil TG](https://github.com/yourusername)
 
 </div>
 
+</div>
+
 ---
 
 <div align="center">
 
-### ⭐ Star this repo if you find it useful!
-
-**Made with 💙 for the Telegram community**
+<img src="https://readme-typing-svg.demolab.com?font=Fira+Code&size=24&duration=2000&pause=800&color=5F27CD&center=true&vCenter=true&repeat=true&width=600&lines=%E2%AD%90+Star+this+repo+if+useful!;%F0%9F%92%99+Made+for+Telegram+Community;%F0%9F%9A%80+Happy+Streaming!" alt="Footer" />
 
 </div>
