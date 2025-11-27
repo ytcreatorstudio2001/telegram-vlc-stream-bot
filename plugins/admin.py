@@ -35,23 +35,55 @@ def save_user_local(user_id):
             json.dump(list(users), f)
 
 async def add_user(user_id):
-    if db:
-        if not await db.is_user_exist(user_id):
+    """Add user without blocking - runs in background"""
+    try:
+        if db:
+            # Don't check if user exists first - just try to add
+            # This is faster and MongoDB will handle duplicates
             await db.add_user(user_id)
-    else:
-        save_user_local(user_id)
+        else:
+            save_user_local(user_id)
+    except Exception as e:
+        # Only log non-duplicate errors
+        if "duplicate" not in str(e).lower():
+            logger.error(f"Error adding user {user_id}: {e}")
+        # Fallback to local storage on any error
+        try:
+            save_user_local(user_id)
+        except:
+            pass  # Silent fail for user tracking
 
 async def get_users_count():
-    if db:
-        return await db.total_users_count()
-    else:
+    try:
+        if db:
+            count = await db.total_users_count()
+            # If MongoDB returns 0 but we have local users, use local count
+            if count == 0:
+                local_count = len(load_users_local())
+                return local_count if local_count > 0 else 0
+            return count
+        else:
+            return len(load_users_local())
+    except Exception as e:
+        logger.error(f"Error getting user count: {e}")
+        # Fallback to local storage
         return len(load_users_local())
 
 async def get_all_users():
     """Get list of all user IDs"""
-    if db:
-        return await db.get_all_users()
-    else:
+    try:
+        if db:
+            users = await db.get_all_users()
+            # If MongoDB returns empty but we have local users, use local
+            if not users:
+                local_users = list(load_users_local())
+                return local_users if local_users else []
+            return users
+        else:
+            return list(load_users_local())
+    except Exception as e:
+        logger.error(f"Error getting all users: {e}")
+        # Fallback to local storage
         return list(load_users_local())
 
 # Admin Filter
@@ -403,7 +435,9 @@ async def confirm_broadcast(client: Client, callback_query: CallbackQuery):
         f"Success Rate: {(success/len(users)*100):.1f}%"
     )
 
-# Hook into start command to save users
+
+# Hook into start command to save users (non-blocking)
 @Client.on_message(filters.command("start"), group=-1)
 async def log_user(client: Client, message: Message):
-    await add_user(message.from_user.id)
+    # Run user tracking in background without blocking the response
+    asyncio.create_task(add_user(message.from_user.id))
