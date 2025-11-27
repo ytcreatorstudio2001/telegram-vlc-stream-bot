@@ -1,11 +1,446 @@
 <div align="center">
 
-<!-- Rotating Banner - Refreshes on each page load -->
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="./assets/banner1.png">
-  <source media="(prefers-color-scheme: light)" srcset="./assets/banner2.png">
-  <img alt="Telegram VLC Stream Bot" src="./assets/banner3.png" width="100%">
-</picture>
+<!-- Scrolling Banner -->
+<div style="width: 100%; overflow: hidden; height: 200px;">
+  <div style="display: inline-block; white-space: nowrap; animation: scroll-banner 30s linear infinite;">
+    <img src="./assets/banner.gif" alt="Telegram VLC Stream Bot Banner" style="display: inline-block; height: 200px;">
+    <img src="./assets/banner.gif" alt="Telegram VLC Stream Bot Banner" style="display: inline-block; height: 200px;">
+  </div>
+</div>
+
+<style>
+  @keyframes scroll-banner {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+
+  /* Header animation */
+  h1 {
+    animation: color-change 8s infinite alternate;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+  }
+
+  @keyframes color-change {
+    0% { color: #4e54c8; }
+    25% { color: #8f94fb; }
+    50% { color: #ff6b6b; }
+    75% { color: #4ecdc4; }
+    100% { color: #ff9a76; }
+  }
+
+  /* Animated badges */
+  img[alt*="badge"] {
+    transition: all 0.3s ease;
+    animation: float 3s ease-in-out infinite;
+  }
+
+  img[alt*="badge"]:hover {
+    transform: scale(1.1);
+  }
+
+  @keyframes float {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-5px); }
+    100% { transform: translateY(0px); }
+  }
+
+  /* Animated typing SVG containers */
+  img[src*="readme-typing-svg"] {
+    border-radius: 10px;
+    animation: glow 2s ease-in-out infinite alternate;
+  }
+
+  @keyframes glow {
+    from { box-shadow: 0 5px #fff, 0 0 10px #3498db, 0 0 15px #3498db; }
+    to { box-shadow: 0 0 10px #fff, 0 0 20px #3498db, 0 0 30px #3498db; }
+  }
+
+  /* Animated table rows */
+  table tr:nth-child(even) {
+    animation: fadeIn 1s ease-out;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Animated links */
+  a {
+    transition: all 0.3s ease;
+    position: relative;
+  }
+
+  a:hover {
+    color: #ff6b6b !important;
+    text-shadow: 0 0 5px rgba(255, 107, 107, 0.7);
+  }
+
+  a::after {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 2px;
+    bottom: -2px;
+    left: 0;
+    background-color: #ff6b6b;
+    visibility: hidden;
+    transform: scaleX(0);
+    transition: all 0.3s ease;
+  }
+
+  a:hover::after {
+    visibility: visible;
+    transform: scaleX(1);
+  }
+
+  /* Animated section dividers */
+  hr {
+    border: 0;
+    height: 1px;
+    background: linear-gradient(to right, transparent, #3498db, transparent);
+    animation: slideIn 1s ease-out;
+  }
+
+  @keyframes slideIn {
+    from { width: 0%; }
+    to { width: 100%; }
+  }
+
+  /* Animated content containers */
+  div[align="center"] {
+    transition: transform 0.3s ease;
+  }
+
+  div[align="center"]:hover {
+    transform: scale(1.01);
+  }
+
+  /* Pulse animation for buttons */
+  [src*="deploy"] {
+    transition: all 0.3s ease;
+  }
+
+  [src*="deploy"]:hover {
+    transform: scale(1.05);
+    filter: brightness(1.2);
+  }
+
+  /* Fade-in animation for page load */
+  body > div {
+    animation: fadeInUp 1s ease-out;
+  }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Bounce animation for emojis */
+  span, img {
+    transition: transform 0.2s ease;
+  }
+
+  span:hover, img:hover:not([src*="readme-typing-svg"]):not([src*="deploy"]):not([alt*="badge"]) {
+    transform: scale(1.1);
+  }
+
+  /* Breathing animation for the footer */
+  [src*="readme-typing-svg"]:last-child {
+    animation: breathe 4s ease-in-out infinite;
+  }
+
+  @keyframes breathe {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.02); }
+    100% { transform: scale(1); }
+  }
+
+  /* Glowing effect for special elements */
+  [src*="github.com"] {
+    filter: drop-shadow(0 0 3px rgba(255, 215, 0, 0.7));
+  }
+
+  /* Animated code blocks */
+  code {
+    background: linear-gradient(45deg, #1a1a2e, #16213e);
+    color: #00d9ff;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: 'Courier New', monospace;
+    animation: codeGlow 3s ease-in-out infinite alternate;
+  }
+
+  @keyframes codeGlow {
+    from { box-shadow: 0 0 2px rgba(0, 217, 25, 0.5); }
+    to { box-shadow: 0 0 8px rgba(0, 217, 255, 0.8); }
+  }
+
+  /* Animated table */
+  table {
+    border-collapse: separate;
+    border-spacing: 0 10px;
+    animation: tableSlide 1s ease-out;
+  }
+
+  @keyframes tableSlide {
+    from { transform: translateX(-20px); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+
+  /* Pulse animation for feature icons */
+  table img {
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+  }
+
+  /* Slide-in for quick start section */
+  h3[id*="quick"] {
+    animation: slideInLeft 1s ease-out;
+  }
+
+  @keyframes slideInLeft {
+    from { transform: translateX(-30px); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+
+  /* Slide-in for other headings */
+  h2 {
+    animation: slideInDown 1s ease-out;
+  }
+
+  @keyframes slideInDown {
+    from { transform: translateY(-30px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+
+  /* Rotate animation for the copyright section */
+  [src*="developer"] {
+    animation: rotate 20s linear infinite;
+  }
+
+  @keyframes rotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  /* Shimmer effect for special text */
+  p[style*="color"] {
+    background: linear-gradient(90deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4, #ffeaa7);
+    background-size: 400% 400%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: gradient 8s ease infinite;
+  }
+
+  @keyframes gradient {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  /* Floating effect for badges */
+  img[alt*="Telegram"], img[alt*="VLC"], img[alt*="Python"], img[alt*="FastAPI"] {
+    animation: floatBadge 3s ease-in-out infinite;
+  }
+
+  @keyframes floatBadge {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-8px); }
+    100% { transform: translateY(0px); }
+  }
+
+  /* Delayed animations for elements */
+  img[src*="readme-typing-svg"]:nth-child(2) {
+    animation-delay: 0.5s;
+  }
+
+  img[src*="readme-typing-svg"]:nth-child(3) {
+    animation-delay: 1s;
+  }
+
+  img[src*="readme-typing-svg"]:nth-child(4) {
+    animation-delay: 1.5s;
+  }
+
+  /* Hover effect for feature table cells */
+  td:hover, th:hover {
+    background: rgba(52, 152, 219, 0.2) !important;
+    transition: background 0.3s ease;
+  }
+
+  /* Pulse animation for the star message */
+  img[src*="Footer"] {
+    animation: pulseFooter 3s infinite;
+  }
+
+  @keyframes pulseFooter {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+  }
+
+  /* Gradient border animation */
+  div[align="center"]:not(:first-child):not(:last-child) {
+    position: relative;
+  }
+
+  div[align="center"]:not(:first-child):not(:last-child)::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, #3498db, transparent);
+    animation: borderSlide 3s linear infinite;
+  }
+
+  @keyframes borderSlide {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+  }
+
+  /* Enhanced hover effects for deploy buttons */
+  [src*="koyeb"], [src*="render"] {
+    transition: all 0.4s ease;
+  }
+
+  [src*="koyeb"]:hover, [src*="render"]:hover {
+    transform: translateY(-5px) scale(1.05);
+    box-shadow: 0 10px 20px rgba(0,0,0.2);
+  }
+
+  /* Animated scroll indicator */
+  body::after {
+    content: '⬇️';
+    position: fixed;
+    right: 20px;
+    top: 50%;
+    animation: bounceScrollIndicator 2s infinite;
+    z-index: 9999;
+    opacity: 0.7;
+  }
+
+  @keyframes bounceScrollIndicator {
+    0%, 20%, 50%, 80%, 100% {transform: translateY(0);}
+    40% {transform: translateY(-20px);}
+    60% {transform: translateY(-10px);}
+  }
+
+  /* Sparkle effect for special elements */
+  [src*="star"], [src*="heart"] {
+    animation: sparkle 1.5s infinite alternate;
+  }
+
+  @keyframes sparkle {
+    0% { filter: brightness(1) drop-shadow(0 2px gold); }
+    100% { filter: brightness(1.5) drop-shadow(0 0 8px gold); }
+  }
+
+  /* Neon glow effect for headings */
+  h1, h2, h3 {
+    text-shadow: 0 0 5px rgba(52, 152, 219, 0.7);
+  }
+
+  /* Wave animation for horizontal rules */
+  hr {
+    position: relative;
+    overflow: hidden;
+  }
+
+  hr::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -10%;
+    width: 20%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+    animation: wave 2s linear infinite;
+  }
+
+  @keyframes wave {
+    0% { left: -10%; }
+    100% { left: 100%; }
+  }
+
+  /* Enhanced hover effect for all images */
+  img {
+    transition: all 0.3s ease;
+  }
+
+  img:hover {
+    transform: scale(1.02);
+    z-index: 100;
+  }
+
+  /* Pulsing effect for the main title */
+  div[align="center"]:first-child h1 {
+    animation: titlePulse 3s infinite;
+  }
+
+  @keyframes titlePulse {
+    0% { text-shadow: 0 0 5px rgba(78, 84, 200, 0.5); }
+    50% { text-shadow: 0 0 20px rgba(78, 84, 200, 0.8), 0 0 30px rgba(142, 148, 251, 0.6); }
+    100% { text-shadow: 0 0 5px rgba(78, 84, 200, 0.5); }
+  }
+
+  /* Animated background gradient */
+  body {
+    background: linear-gradient(-45deg, #091428, #1a1a2e, #16213e, #091428);
+    background-size: 400% 400%;
+    animation: gradientBG 15s ease infinite;
+    color: #ecf0f1;
+  }
+
+  @keyframes gradientBG {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  /* Parallax effect for banner */
+  .banner-container {
+    transform: translateZ(0);
+    will-change: transform;
+  }
+
+  /* Animated loading effect for content */
+  * {
+    opacity: 0;
+    animation: fadeInContent 0.8s ease-in forwards;
+  }
+
+  @keyframes fadeInContent {
+    to {
+      opacity: 1;
+    }
+  }
+
+  /* Staggered animation delays */
+  *:nth-child(2) { animation-delay: 0.1s; }
+  *:nth-child(3) { animation-delay: 0.2s; }
+  *:nth-child(4) { animation-delay: 0.3s; }
+  *:nth-child(5) { animation-delay: 0.4s; }
+  *:nth-child(6) { animation-delay: 0.5s; }
+  *:nth-child(7) { animation-delay: 0.6s; }
+  *:nth-child(8) { animation-delay: 0.7s; }
+  *:nth-child(9) { animation-delay: 0.8s; }
+  *:nth-child(10) { animation-delay: 0.9s; }
+</style>
 
 # 🎬 Telegram VLC Stream Bot
 
