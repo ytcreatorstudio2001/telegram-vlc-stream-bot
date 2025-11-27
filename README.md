@@ -5,7 +5,7 @@
   <br><br>
 
   <a href="https://github.com/ytcreatorstudio2001/telegram-vlc-stream-bot">
-    <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&size=35&duration=3000&pause=1000&color=2CA5E0&center=true&vCenter=true&width=700&lines=🎬+Telegram+VLC+Stream+Bot;Stream+Movies+Directly+📺;No+Downloads+Required+⚡;Fast+%7C+Simple+%7C+Secure+🔐" alt="Typing SVG" />
+    <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&size=35&duration=3000&pause=1000&color=2CA5E0&center=true&vCenter=true&width=700&lines=Telegram+VLC+Stream+Bot;Stream+Movies+Directly;No+Downloads+Required;Fast+Simple+Secure" alt="Typing SVG" />
   </a>
 
   <br><br>
@@ -33,7 +33,7 @@
 <br>
 
 <p align="center">
-  <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&size=20&duration=2000&pause=500&color=8B5CF6&center=true&vCenter=true&width=800&lines=Stream+your+Telegram+files+instantly!;Works+with+VLC%2C+MX+Player%2C+and+more;No+storage+needed+on+your+device;Perfect+for+movies%2C+series%2C+and+music" alt="Subtitle Animation" />
+  <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&size=20&duration=2000&pause=500&color=8B5CF6&center=true&vCenter=true&width=800&lines=Stream+your+Telegram+files+instantly;Works+with+VLC+MX+Player+and+more;No+storage+needed+on+your+device;Perfect+for+movies+series+and+music" alt="Subtitle Animation" />
 </p>
 
 ---
@@ -192,7 +192,7 @@ Contributions are always welcome! Here's how you can help:
 
 <div align="center">
 
-  <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&size=24&duration=3000&pause=1000&color=00D9FF&center=true&vCenter=true&width=600&lines=Created+with+❤️+by+Akhil+TG;Full+Stack+Developer+💻;Open+Source+Enthusiast+🚀" alt="Author Animation" />
+  <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&size=24&duration=3000&pause=1000&color=00D9FF&center=true&vCenter=true&width=600&lines=Created+with+love+by+Akhil+TG;Full+Stack+Developer;Open+Source+Enthusiast" alt="Author Animation" />
 
   <br><br>
 
@@ -211,7 +211,7 @@ Contributions are always welcome! Here's how you can help:
 
 <div align="center">
 
-  <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&size=22&duration=2000&pause=800&color=FFD700&center=true&vCenter=true&repeat=true&width=600&lines=⭐+Star+this+repo+if+you+found+it+useful!;🚀+Happy+Streaming!;🍿+Enjoy+your+movies!" alt="Support Animation" />
+  <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&size=22&duration=2000&pause=800&color=FFD700&center=true&vCenter=true&repeat=true&width=600&lines=Star+this+repo+if+you+found+it+useful;Happy+Streaming;Enjoy+your+movies" alt="Support Animation" />
 
   <br><br>
 
