@@ -107,9 +107,9 @@ graph LR
 
 <div align="center">
   <a href="https://github.com/ytcreatorstudio2001">
-    <img src="https://img.shields.io/badge/GitHub-ytcreatorstudio2001-181717?style=for-the-badge&logo=github"/>
+    <img src="https://img.shields.io/badge/GitHub-Akhil_TG-181717?style=for-the-badge&logo=github"/>
   </a>
-  <a href="https://t.me/your_telegram_username">
+  <a href="https://t.me/akhil_tg">
     <img src="https://img.shields.io/badge/Telegram-Contact_Me-2CA5E0?style=for-the-badge&logo=telegram"/>
   </a>
 </div>
