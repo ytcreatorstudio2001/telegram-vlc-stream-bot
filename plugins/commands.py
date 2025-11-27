@@ -14,6 +14,7 @@ from pyrogram import Client, filters
 from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery, InputMediaPhoto
 from pyrogram.errors import FloodWait
 from config import Config
+from database import db
 from urllib.parse import quote_plus
 import asyncio
 
@@ -70,6 +71,16 @@ def format_duration(seconds: int) -> str:
 async def start(client: Client, message: Message):
     """Start command with minimal colorful welcome message."""
     logger.info(f"Received /start from {message.from_user.id}")
+    
+    # Update user activity
+    if db:
+        await db.update_user_activity(message.from_user.id, {
+            'username': message.from_user.username,
+            'first_name': message.from_user.first_name,
+            'last_name': message.from_user.last_name,
+            'is_premium': getattr(message.from_user, 'is_premium', False),
+            'language_code': getattr(message.from_user, 'language_code', None)
+        })
     
     # Random banner selection
     banners = ["assets/banner.png", "assets/banner1.png", "assets/banner2.png", "assets/banner3.png"]
@@ -224,6 +235,11 @@ async def generate_and_send_link(reply_to: Message, media_msg: Message):
         await reply_to.reply_text("❌ No media found in this message.")
         return
     
+    # Update user stats
+    if db:
+        await db.increment_streams(reply_to.from_user.id)
+        await db.increment_files(reply_to.from_user.id)
+    
     # Generate stream link
     stream_link = f"{Config.URL}/stream/{media_msg.chat.id}/{media_msg.id}"
     file_name = file_info.get("file_name", "Unknown")
@@ -351,6 +367,9 @@ async def batch_command(client: Client, message: Message):
     # Generate links
     sts = await message.reply_text("🔄 **Generating batch links...**\n\nPlease wait...")
     
+    if db:
+        await db.increment_batch_requests(message.from_user.id)
+    
     total_messages = last_msg_id - first_msg_id + 1
     links_generated = []
     
@@ -369,6 +388,10 @@ async def batch_command(client: Client, message: Message):
                         "file_size": file_info.get("file_size", 0),
                         "stream_link": stream_link
                     })
+                    
+                    # Update stats per file
+                    if db:
+                        await db.increment_files(message.from_user.id)
                 
                 # Update progress every 10 messages
                 if len(links_generated) % 10 == 0:

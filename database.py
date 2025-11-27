@@ -44,17 +44,28 @@ class Database:
         
         return self.connected
 
-    def new_user(self, id):
+    def new_user(self, id, user_data=None):
+        from datetime import datetime
         return dict(
             id=id,
-            join_date=None
+            join_date=datetime.now(),
+            first_seen=datetime.now(),
+            last_seen=datetime.now(),
+            total_streams=0,
+            total_files=0,
+            total_batch_requests=0,
+            username=user_data.get('username') if user_data else None,
+            first_name=user_data.get('first_name') if user_data else None,
+            last_name=user_data.get('last_name') if user_data else None,
+            is_premium=user_data.get('is_premium', False) if user_data else False,
+            language_code=user_data.get('language_code') if user_data else None
         )
 
-    async def add_user(self, id):
+    async def add_user(self, id, user_data=None):
         try:
             if not await self._check_connection():
                 return False
-            user = self.new_user(id)
+            user = self.new_user(id, user_data)
             # Use insert_one without waiting for acknowledgment for speed
             await self.col.insert_one(user)
             return True
@@ -97,6 +108,88 @@ class Database:
         except Exception as e:
             logger.error(f"Error getting all users from MongoDB: {e}")
             return []
+
+    async def update_user_activity(self, user_id, user_data=None):
+        """Update user's last seen and optionally their profile data"""
+        try:
+            if not await self._check_connection():
+                return False
+            from datetime import datetime
+            update_data = {'last_seen': datetime.now()}
+            
+            if user_data:
+                if 'username' in user_data:
+                    update_data['username'] = user_data['username']
+                if 'first_name' in user_data:
+                    update_data['first_name'] = user_data['first_name']
+                if 'last_name' in user_data:
+                    update_data['last_name'] = user_data['last_name']
+                if 'is_premium' in user_data:
+                    update_data['is_premium'] = user_data['is_premium']
+                if 'language_code' in user_data:
+                    update_data['language_code'] = user_data['language_code']
+            
+            await self.col.update_one(
+                {'id': int(user_id)},
+                {'$set': update_data}
+            )
+            return True
+        except Exception as e:
+            logger.error(f"Error updating user activity: {e}")
+            return False
+
+    async def increment_streams(self, user_id):
+        """Increment user's total streams counter"""
+        try:
+            if not await self._check_connection():
+                return False
+            await self.col.update_one(
+                {'id': int(user_id)},
+                {'$inc': {'total_streams': 1}}
+            )
+            return True
+        except Exception as e:
+            logger.error(f"Error incrementing streams: {e}")
+            return False
+
+    async def increment_files(self, user_id):
+        """Increment user's total files counter"""
+        try:
+            if not await self._check_connection():
+                return False
+            await self.col.update_one(
+                {'id': int(user_id)},
+                {'$inc': {'total_files': 1}}
+            )
+            return True
+        except Exception as e:
+            logger.error(f"Error incrementing files: {e}")
+            return False
+
+    async def increment_batch_requests(self, user_id):
+        """Increment user's total batch requests counter"""
+        try:
+            if not await self._check_connection():
+                return False
+            await self.col.update_one(
+                {'id': int(user_id)},
+                {'$inc': {'total_batch_requests': 1}}
+            )
+            return True
+        except Exception as e:
+            logger.error(f"Error incrementing batch requests: {e}")
+            return False
+
+    async def get_user_details(self, user_id):
+        """Get detailed user information"""
+        try:
+            if not await self._check_connection():
+                return None
+            user = await self.col.find_one({'id': int(user_id)})
+            return user
+        except Exception as e:
+            logger.error(f"Error getting user details: {e}")
+            return None
 
     async def delete_user(self, user_id):
         try:

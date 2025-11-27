@@ -34,13 +34,24 @@ def save_user_local(user_id):
         with open(USERS_FILE, "w") as f:
             json.dump(list(users), f)
 
-async def add_user(user_id):
+async def add_user(user_id, user_obj=None):
     """Add user without blocking - runs in background"""
     try:
         if db:
+            # Prepare user data from user object
+            user_data = None
+            if user_obj:
+                user_data = {
+                    'username': user_obj.username,
+                    'first_name': user_obj.first_name,
+                    'last_name': user_obj.last_name,
+                    'is_premium': getattr(user_obj, 'is_premium', False),
+                    'language_code': getattr(user_obj, 'language_code', None)
+                }
+            
             # Don't check if user exists first - just try to add
             # This is faster and MongoDB will handle duplicates
-            await db.add_user(user_id)
+            await db.add_user(user_id, user_data)
         else:
             save_user_local(user_id)
     except Exception as e:
@@ -244,6 +255,133 @@ async def admin_callbacks(client: Client, callback_query: CallbackQuery):
         await asyncio.sleep(2)
         os.execl(sys.executable, sys.executable, *sys.argv)
 
+    elif data.startswith("refresh_user_"):
+        user_id = int(data.split("_")[2])
+        
+        # Reuse the logic from handle_admin_input for displaying user details
+        # We need to construct a fake message object or refactor the display logic
+        # For simplicity, we'll just trigger the display logic again
+        
+        try:
+            # Try to get user from Telegram
+            user = await client.get_users(user_id)
+            
+            # Get detailed info from database
+            user_db_data = None
+            if db:
+                # Update last seen before refreshing
+                await db.update_user_activity(user_id)
+                user_db_data = await db.get_user_details(user_id)
+            
+            # Format timestamps
+            def format_time(dt):
+                if not dt:
+                    return "N/A"
+                from datetime import datetime
+                if isinstance(dt, str):
+                    return dt
+                return dt.strftime("%Y-%m-%d %H:%M:%S")
+            
+            def time_ago(dt):
+                if not dt:
+                    return "N/A"
+                from datetime import datetime
+                if isinstance(dt, str):
+                    return "N/A"
+                delta = datetime.now() - dt
+                
+                if delta.days > 0:
+                    return f"{delta.days} day{'s' if delta.days > 1 else ''} ago"
+                elif delta.seconds >= 3600:
+                    hours = delta.seconds // 3600
+                    return f"{hours} hour{'s' if hours > 1 else ''} ago"
+                elif delta.seconds >= 60:
+                    minutes = delta.seconds // 60
+                    return f"{minutes} minute{'s' if minutes > 1 else ''} ago"
+                else:
+                    return "Just now"
+            
+            # Build comprehensive user info
+            user_info = (
+                "╔═══════════════════════════╗\n"
+                "║   👤 **USER DETAILS**   ║\n"
+                "╚═══════════════════════════╝\n\n"
+                "**📋 PROFILE INFORMATION**\n"
+                f"┣━ 🆔 **ID:** `{user.id}`\n"
+                f"┣━ 👤 **Name:** {user.first_name} {user.last_name or ''}\n"
+                f"┣━ 📱 **Username:** @{user.username if user.username else 'None'}\n"
+                f"┣━ 💎 **Premium:** {'✅ Yes' if getattr(user, 'is_premium', False) else '❌ No'}\n"
+                f"┣━ 🤖 **Bot:** {'Yes' if user.is_bot else 'No'}\n"
+                f"┣━ 🌐 **Language:** {getattr(user, 'language_code', 'N/A').upper() if getattr(user, 'language_code', None) else 'N/A'}\n"
+            )
+            
+            # Add database statistics if available
+            if user_db_data:
+                user_info += (
+                    f"┗━ 🔐 **Status:** {'Verified' if user.is_verified else 'Active'}\n\n"
+                    "**📊 ACTIVITY STATISTICS**\n"
+                    f"┣━ 🎬 **Total Streams:** `{user_db_data.get('total_streams', 0)}`\n"
+                    f"┣━ 📁 **Total Files:** `{user_db_data.get('total_files', 0)}`\n"
+                    f"┣━ 📦 **Batch Requests:** `{user_db_data.get('total_batch_requests', 0)}`\n"
+                    f"┗━ 📈 **Total Actions:** `{user_db_data.get('total_streams', 0) + user_db_data.get('total_files', 0) + user_db_data.get('total_batch_requests', 0)}`\n\n"
+                    "**⏰ TIMESTAMPS**\n"
+                    f"┣━ 🎯 **First Seen:** `{format_time(user_db_data.get('first_seen'))}`\n"
+                    f"┃   _{time_ago(user_db_data.get('first_seen'))}_\n"
+                    f"┣━ 👁️ **Last Seen:** `{format_time(user_db_data.get('last_seen'))}`\n"
+                    f"┃   _{time_ago(user_db_data.get('last_seen'))}_\n"
+                    f"┗━ 📅 **Join Date:** `{format_time(user_db_data.get('join_date'))}`\n\n"
+                )
+            else:
+                user_info += (
+                    f"┗━ 🔐 **Status:** {'Verified' if user.is_verified else 'Active'}\n\n"
+                    "**📊 ACTIVITY STATISTICS**\n"
+                    "⚠️ _No activity data available_\n"
+                    "_User has not been tracked in database_\n\n"
+                )
+            
+            # Add user engagement level
+            if user_db_data:
+                total_actions = user_db_data.get('total_streams', 0) + user_db_data.get('total_files', 0) + user_db_data.get('total_batch_requests', 0)
+                
+                if total_actions >= 100:
+                    engagement = "🔥 **Power User**"
+                elif total_actions >= 50:
+                    engagement = "⭐ **Active User**"
+                elif total_actions >= 10:
+                    engagement = "✅ **Regular User**"
+                elif total_actions > 0:
+                    engagement = "🆕 **New User**"
+                else:
+                    engagement = "😴 **Inactive**"
+                
+                user_info += (
+                    f"**🎯 ENGAGEMENT LEVEL**\n"
+                    f"{engagement}\n\n"
+                )
+            
+            user_info += (
+                "━━━━━━━━━━━━━━━━━━━━━━\n"
+                "_© 2025 VLC Stream Bot Admin Panel_"
+            )
+            
+            # Create action buttons
+            action_buttons = [
+                [
+                    InlineKeyboardButton("💬 Message User", url=f"tg://user?id={user.id}"),
+                    InlineKeyboardButton("🔄 Refresh", callback_data=f"refresh_user_{user.id}")
+                ],
+                [InlineKeyboardButton("🔙 Back to Admin", callback_data="back_to_admin")]
+            ]
+            
+            await callback_query.edit_message_text(
+                user_info,
+                reply_markup=InlineKeyboardMarkup(action_buttons)
+            )
+            await callback_query.answer("✅ User details refreshed!")
+            
+        except Exception as e:
+            await callback_query.answer(f"❌ Error refreshing: {str(e)}", show_alert=True)
+
 @Client.on_callback_query(filters.regex("^back_to_admin$"))
 async def back_to_admin(client: Client, callback_query: CallbackQuery):
     if not is_admin(callback_query.from_user.id):
@@ -306,29 +444,175 @@ async def handle_admin_input(client: Client, message: Message):
         try:
             search_id = int(message.text.strip())
             
-            # Check if user exists
-            users = await get_all_users()
-            
-            if search_id in users:
-                try:
-                    user = await client.get_users(search_id)
+            # Try to get user from Telegram
+            try:
+                user = await client.get_users(search_id)
+                
+                # Get detailed info from database
+                user_db_data = None
+                if db:
+                    user_db_data = await db.get_user_details(search_id)
+                
+                # Format timestamps
+                def format_time(dt):
+                    if not dt:
+                        return "N/A"
+                    from datetime import datetime
+                    if isinstance(dt, str):
+                        return dt
+                    return dt.strftime("%Y-%m-%d %H:%M:%S")
+                
+                def time_ago(dt):
+                    if not dt:
+                        return "N/A"
+                    from datetime import datetime
+                    if isinstance(dt, str):
+                        return "N/A"
+                    delta = datetime.now() - dt
                     
-                    user_info = (
-                        f"👤 **User Found**\n\n"
-                        f"**ID:** `{user.id}`\n"
-                        f"**Name:** {user.first_name} {user.last_name or ''}\n"
-                        f"**Username:** @{user.username if user.username else 'None'}\n"
-                        f"**Status:** {'Premium' if user.is_premium else 'Regular'}\n"
-                        f"**Bot:** {'Yes' if user.is_bot else 'No'}\n"
+                    if delta.days > 0:
+                        return f"{delta.days} day{'s' if delta.days > 1 else ''} ago"
+                    elif delta.seconds >= 3600:
+                        hours = delta.seconds // 3600
+                        return f"{hours} hour{'s' if hours > 1 else ''} ago"
+                    elif delta.seconds >= 60:
+                        minutes = delta.seconds // 60
+                        return f"{minutes} minute{'s' if minutes > 1 else ''} ago"
+                    else:
+                        return "Just now"
+                
+                # Build comprehensive user info
+                user_info = (
+                    "╔═══════════════════════════╗\n"
+                    "║   👤 **USER DETAILS**   ║\n"
+                    "╚═══════════════════════════╝\n\n"
+                    "**📋 PROFILE INFORMATION**\n"
+                    f"┣━ 🆔 **ID:** `{user.id}`\n"
+                    f"┣━ 👤 **Name:** {user.first_name} {user.last_name or ''}\n"
+                    f"┣━ 📱 **Username:** @{user.username if user.username else 'None'}\n"
+                    f"┣━ 💎 **Premium:** {'✅ Yes' if getattr(user, 'is_premium', False) else '❌ No'}\n"
+                    f"┣━ 🤖 **Bot:** {'Yes' if user.is_bot else 'No'}\n"
+                    f"┣━ 🌐 **Language:** {getattr(user, 'language_code', 'N/A').upper() if getattr(user, 'language_code', None) else 'N/A'}\n"
+                )
+                
+                # Add database statistics if available
+                if user_db_data:
+                    user_info += (
+                        f"┗━ 🔐 **Status:** {'Verified' if user.is_verified else 'Active'}\n\n"
+                        "**📊 ACTIVITY STATISTICS**\n"
+                        f"┣━ 🎬 **Total Streams:** `{user_db_data.get('total_streams', 0)}`\n"
+                        f"┣━ 📁 **Total Files:** `{user_db_data.get('total_files', 0)}`\n"
+                        f"┣━ 📦 **Batch Requests:** `{user_db_data.get('total_batch_requests', 0)}`\n"
+                        f"┗━ 📈 **Total Actions:** `{user_db_data.get('total_streams', 0) + user_db_data.get('total_files', 0) + user_db_data.get('total_batch_requests', 0)}`\n\n"
+                        "**⏰ TIMESTAMPS**\n"
+                        f"┣━ 🎯 **First Seen:** `{format_time(user_db_data.get('first_seen'))}`\n"
+                        f"┃   _{time_ago(user_db_data.get('first_seen'))}_\n"
+                        f"┣━ 👁️ **Last Seen:** `{format_time(user_db_data.get('last_seen'))}`\n"
+                        f"┃   _{time_ago(user_db_data.get('last_seen'))}_\n"
+                        f"┗━ 📅 **Join Date:** `{format_time(user_db_data.get('join_date'))}`\n\n"
                     )
+                else:
+                    user_info += (
+                        f"┗━ 🔐 **Status:** {'Verified' if user.is_verified else 'Active'}\n\n"
+                        "**📊 ACTIVITY STATISTICS**\n"
+                        "⚠️ _No activity data available_\n"
+                        "_User has not been tracked in database_\n\n"
+                    )
+                
+                # Add user engagement level
+                if user_db_data:
+                    total_actions = user_db_data.get('total_streams', 0) + user_db_data.get('total_files', 0) + user_db_data.get('total_batch_requests', 0)
                     
-                    await message.reply_text(user_info)
-                except Exception as e:
-                    await message.reply_text(f"✅ User ID `{search_id}` exists in database.\n\n❌ But couldn't fetch details: {str(e)}")
-            else:
-                await message.reply_text(f"❌ User ID `{search_id}` not found in database.")
+                    if total_actions >= 100:
+                        engagement = "🔥 **Power User**"
+                    elif total_actions >= 50:
+                        engagement = "⭐ **Active User**"
+                    elif total_actions >= 10:
+                        engagement = "✅ **Regular User**"
+                    elif total_actions > 0:
+                        engagement = "🆕 **New User**"
+                    else:
+                        engagement = "😴 **Inactive**"
+                    
+                    user_info += (
+                        f"**🎯 ENGAGEMENT LEVEL**\n"
+                        f"{engagement}\n\n"
+                    )
+                
+                user_info += (
+                    "━━━━━━━━━━━━━━━━━━━━━━\n"
+                    "_© 2025 VLC Stream Bot Admin Panel_"
+                )
+                
+                # Create action buttons
+                action_buttons = [
+                    [
+                        InlineKeyboardButton("💬 Message User", url=f"tg://user?id={user.id}"),
+                        InlineKeyboardButton("🔄 Refresh", callback_data=f"refresh_user_{user.id}")
+                    ],
+                    [InlineKeyboardButton("🔙 Back to Admin", callback_data="back_to_admin")]
+                ]
+                
+                await message.reply_text(
+                    user_info,
+                    reply_markup=InlineKeyboardMarkup(action_buttons)
+                )
+                
+            except Exception as e:
+                # User not found on Telegram or error fetching
+                users = await get_all_users()
+                if search_id in users:
+                    # User exists in DB but can't fetch from Telegram
+                    user_db_data = None
+                    if db:
+                        user_db_data = await db.get_user_details(search_id)
+                    
+                    if user_db_data:
+                        user_info = (
+                            "╔═══════════════════════════╗\n"
+                            "║   👤 **USER DETAILS**   ║\n"
+                            "╚═══════════════════════════╝\n\n"
+                            "**📋 PROFILE INFORMATION**\n"
+                            f"┣━ 🆔 **ID:** `{search_id}`\n"
+                            f"┣━ 👤 **Name:** {user_db_data.get('first_name', 'N/A')} {user_db_data.get('last_name', '') or ''}\n"
+                            f"┣━ 📱 **Username:** @{user_db_data.get('username') if user_db_data.get('username') else 'None'}\n"
+                            f"┣━ 💎 **Premium:** {'✅ Yes' if user_db_data.get('is_premium', False) else '❌ No'}\n"
+                            f"┗━ 🌐 **Language:** {user_db_data.get('language_code', 'N/A').upper() if user_db_data.get('language_code') else 'N/A'}\n\n"
+                            "**📊 ACTIVITY STATISTICS**\n"
+                            f"┣━ 🎬 **Total Streams:** `{user_db_data.get('total_streams', 0)}`\n"
+                            f"┣━ 📁 **Total Files:** `{user_db_data.get('total_files', 0)}`\n"
+                            f"┣━ 📦 **Batch Requests:** `{user_db_data.get('total_batch_requests', 0)}`\n"
+                            f"┗━ 📈 **Total Actions:** `{user_db_data.get('total_streams', 0) + user_db_data.get('total_files', 0) + user_db_data.get('total_batch_requests', 0)}`\n\n"
+                            "⚠️ _Unable to fetch live Telegram data_\n"
+                            "_Showing cached database information_\n\n"
+                            "━━━━━━━━━━━━━━━━━━━━━━\n"
+                            "_© 2025 VLC Stream Bot Admin Panel_"
+                        )
+                    else:
+                        user_info = f"✅ User ID `{search_id}` exists in database.\n\n❌ But couldn't fetch details: {str(e)}"
+                    
+                    await message.reply_text(
+                        user_info,
+                        reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 Back", callback_data="back_to_admin")]])
+                    )
+                else:
+                    await message.reply_text(
+                        f"❌ **User Not Found**\n\n"
+                        f"User ID `{search_id}` does not exist in the database.\n\n"
+                        f"**Possible reasons:**\n"
+                        f"• User has never interacted with the bot\n"
+                        f"• Invalid User ID\n"
+                        f"• User data was deleted\n\n"
+                        f"_Error: {str(e)}_",
+                        reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 Back", callback_data="back_to_admin")]])
+                    )
         except ValueError:
-            await message.reply_text("❌ Invalid User ID. Please send a numeric ID.")
+            await message.reply_text(
+                "❌ **Invalid User ID**\n\n"
+                "Please send a valid numeric User ID.\n\n"
+                "**Example:** `123456789`",
+                reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 Back", callback_data="back_to_admin")]])
+            )
     
     # Handle banner upload
     elif state == "waiting_for_banner":
@@ -444,4 +728,4 @@ async def confirm_broadcast(client: Client, callback_query: CallbackQuery):
 @Client.on_message(filters.command("start"), group=-1)
 async def log_user(client: Client, message: Message):
     # Run user tracking in background without blocking the response
-    asyncio.create_task(add_user(message.from_user.id))
+    asyncio.create_task(add_user(message.from_user.id, message.from_user))
