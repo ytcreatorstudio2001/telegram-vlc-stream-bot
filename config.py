@@ -1,3 +1,8 @@
+"""
+Telegram VLC Stream Bot - Configuration Module
+Copyright (c) 2025 Akhil TG. All Rights Reserved.
+"""
+
 import os
 from dotenv import load_dotenv
 

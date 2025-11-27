@@ -1,78 +1,264 @@
-# Telegram Media Streaming Bot
+<div align="center">
 
-This bot allows you to stream large files (video/audio) from Telegram directly to VLC or any media player without downloading them fully to your device.
+![Banner](./assets/banner.png)
 
-## Features
-- Stream files without full download (Direct Streaming).
-- Supports Seek/Resume (HTTP Range Headers).
-- Works with VLC, MX Player, Browser, etc.
-- Handles large files (2GB+).
-- Deployed with FastAPI + Uvicorn + Pyrogram.
+# 🎬 Telegram VLC Stream Bot
 
-## Setup
+<p align="center">
+  <img src="https://img.shields.io/badge/Telegram-Bot-blue?style=for-the-badge&logo=telegram" alt="Telegram Bot"/>
+  <img src="https://img.shields.io/badge/VLC-Streaming-orange?style=for-the-badge&logo=vlc-media-player" alt="VLC Streaming"/>
+  <img src="https://img.shields.io/badge/Python-3.8+-green?style=for-the-badge&logo=python" alt="Python"/>
+  <img src="https://img.shields.io/badge/FastAPI-Framework-teal?style=for-the-badge&logo=fastapi" alt="FastAPI"/>
+</p>
 
-1. **Install Dependencies**
+<p align="center">
+  <strong>Stream large media files from Telegram directly to VLC without downloading!</strong>
+</p>
+
+<p align="center">
+  <a href="#features">Features</a> •
+  <a href="#quick-start">Quick Start</a> •
+  <a href="#deployment">Deployment</a> •
+  <a href="#usage">Usage</a> •
+  <a href="#license">License</a>
+</p>
+
+</div>
+
+---
+
+## ✨ Features
+
+<div align="center">
+
+| Feature | Description |
+|---------|-------------|
+| 🚀 **Direct Streaming** | Stream files without full download |
+| ⏯️ **Seek/Resume Support** | HTTP Range Headers for smooth playback |
+| 📱 **Universal Compatibility** | Works with VLC, MX Player, Browsers, etc. |
+| 💾 **Large File Support** | Handles files 2GB+ with ease |
+| ⚡ **Fast & Efficient** | Built with FastAPI + Uvicorn + Pyrogram |
+| 🔒 **Secure** | No data storage, direct streaming only |
+
+</div>
+
+---
+
+## 🎯 Quick Start
+
+### Prerequisites
+- Python 3.8 or higher
+- Telegram API credentials ([Get them here](https://my.telegram.org))
+- Bot Token from [@BotFather](https://t.me/BotFather)
+
+### Installation
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/yourusername/telegram-vlc-stream-bot.git
+   cd telegram-vlc-stream-bot
+   ```
+
+2. **Install dependencies**
    ```bash
    pip install -r requirements.txt
    ```
 
-2. **Configure Environment**
-   - Rename `.env.sample` to `.env`.
-   - Fill in your `API_ID`, `API_HASH`, and `BOT_TOKEN`.
-   - `API_ID` and `API_HASH` can be obtained from [my.telegram.org](https://my.telegram.org).
-   - `BOT_TOKEN` from [@BotFather](https://t.me/BotFather).
+3. **Configure environment**
+   ```bash
+   # Rename .env.sample to .env
+   cp .env.sample .env
+   
+   # Edit .env and add your credentials:
+   # API_ID=your_api_id
+   # API_HASH=your_api_hash
+   # BOT_TOKEN=your_bot_token
+   # URL=http://localhost:8080 (for local testing)
+   ```
 
-3. **Run the Bot**
+4. **Run the bot**
    ```bash
    python main.py
    ```
 
-4. **Usage**
-   - Start the bot: `/start`
-   - Forward a file to the bot or reply to a file with `/stream`.
-   - Copy the generated link.
-   - Open VLC -> Media -> Open Network Stream -> Paste Link -> Play.
+---
 
-## 🚀 Deployment (Recommended: Koyeb)
+## 📖 Usage
 
-### Why Koyeb?
-Koyeb is currently the best free-tier option for this bot because:
-- **No Sleep/Idle**: Unlike Render, it doesn't spin down after inactivity (in the free tier, though check current terms).
-- **Fast**: High-performance microVMs.
-- **Docker Native**: Works perfectly with our Dockerfile.
+<div align="center">
 
-### 1. Deploy to Koyeb
-1.  **Push to GitHub**: Make sure this code is in a GitHub repository.
-2.  **Sign Up**: Go to [Koyeb.com](https://www.koyeb.com) and sign up.
-3.  **Create App**:
-    - Click **Create App**.
-    - Select **GitHub** as the deployment method.
-    - Choose your repository (`Telegram-VLC-Stream-Bot`).
-4.  **Configure**:
-    - **Builder**: Select **Docker**.
-    - **Privileged**: Leave unchecked (not needed).
-    - **Environment Variables** (Click "Add Variable"):
-        - `API_ID`: Your Telegram API ID.
-        - `API_HASH`: Your Telegram API Hash.
-        - `BOT_TOKEN`: Your Bot Token.
-        - `URL`: Leave blank for now, or set to `https://<your-app-name>.koyeb.app` if you know it.
-5.  **Deploy**: Click **Deploy**.
-6.  **Final Step**: Once deployed, copy your App's public URL (e.g., `https://my-bot-123.koyeb.app`) and update the `URL` environment variable in Koyeb settings if you haven't already. Redeploy if you changed it.
+### Step-by-Step Guide
+
+</div>
+
+1. **Start the bot** - Send `/start` to your bot on Telegram
+2. **Send a file** - Forward any video/audio file to the bot
+3. **Get stream link** - Bot will reply with a streaming URL
+4. **Open in VLC** - Copy the link and paste it in VLC:
+   - Open VLC Media Player
+   - Go to `Media` → `Open Network Stream`
+   - Paste the URL
+   - Click `Play` and enjoy! 🎉
+
+<div align="center">
+
+![Demo](https://media.giphy.com/media/3o7TKSjRrfIPjeiVyg/giphy.gif)
+
+</div>
+
+---
+
+## 🚀 Deployment
+
+### Recommended: Koyeb (Free Tier)
+
+<div align="center">
+
+[![Deploy to Koyeb](https://www.koyeb.com/static/images/deploy/button.svg)](https://app.koyeb.com)
+
+</div>
+
+#### Why Koyeb?
+- ✅ **No Sleep/Idle** - Always online (unlike Render)
+- ✅ **Fast Performance** - High-performance microVMs
+- ✅ **Docker Native** - Perfect for containerized apps
+- ✅ **Free Tier** - Generous free tier available
+
+#### Deployment Steps
+
+1. **Push to GitHub**
+   ```bash
+   git add .
+   git commit -m "Initial commit"
+   git push origin master
+   ```
+
+2. **Sign up at [Koyeb.com](https://www.koyeb.com)**
+
+3. **Create New App**
+   - Click **Create App**
+   - Select **GitHub** as deployment method
+   - Choose your repository
+
+4. **Configure Settings**
+   - **Builder**: Docker
+   - **Port**: 8080
+   - **Environment Variables**:
+     ```
+     API_ID=your_telegram_api_id
+     API_HASH=your_telegram_api_hash
+     BOT_TOKEN=your_bot_token
+     URL=https://your-app-name.koyeb.app
+     ```
+
+5. **Deploy** - Click Deploy and wait for build to complete
+
+6. **Update URL** - Once deployed, copy your app URL and update the `URL` environment variable if needed
+
+---
 
 ### Alternative: Render
-If you prefer Render:
-1. Create a "Web Service" on [Render](https://render.com).
-2. Connect your repo.
-3. Add Env Vars: `API_ID`, `API_HASH`, `BOT_TOKEN`, `URL`.
-4. **Note**: Render Free Tier spins down after 15 mins of inactivity.
 
-### ❌ NOT Recommended
-*   **Heroku**: No longer free.
-*   **Vercel / Netlify**: Will timeout after 10 seconds (useless for streaming).
+<div align="center">
 
-## 🛠 Local Development (Ngrok)
-To test on your phone/TV without a server:
-1. `pip install -r requirements.txt`
-2. `python main.py`
-3. `ngrok http 8080`
-4. Set `URL` in `.env` to the Ngrok URL.
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com)
+
+</div>
+
+1. Create a **Web Service** on [Render](https://render.com)
+2. Connect your GitHub repository
+3. Add environment variables: `API_ID`, `API_HASH`, `BOT_TOKEN`, `URL`
+4. **Note**: Free tier spins down after 15 minutes of inactivity ⚠️
+
+---
+
+### ❌ Not Recommended
+
+| Platform | Reason |
+|----------|--------|
+| **Heroku** | No longer offers free tier |
+| **Vercel/Netlify** | 10-second timeout (unsuitable for streaming) |
+
+---
+
+## 🛠️ Local Development with Ngrok
+
+Want to test on your phone/TV without deploying?
+
+```bash
+# Install dependencies
+pip install -r requirements.txt
+
+# Run the bot
+python main.py
+
+# In another terminal, start ngrok
+ngrok http 8080
+
+# Copy the ngrok URL (e.g., https://abc123.ngrok.io)
+# Update URL in .env file
+# Restart the bot
+```
+
+---
+
+## 🏗️ Architecture
+
+```
+┌─────────────┐      ┌──────────────┐      ┌─────────────┐
+│   Telegram  │─────▶│  Stream Bot  │─────▶│  VLC Player │
+│   Servers   │      │  (FastAPI)   │      │  (Client)   │
+└─────────────┘      └──────────────┘      └─────────────┘
+                            │
+                            ▼
+                     ┌──────────────┐
+                     │   Pyrogram   │
+                     │   Client     │
+                     └──────────────┘
+```
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome! Feel free to:
+- 🐛 Report bugs
+- 💡 Suggest new features
+- 🔧 Submit pull requests
+
+---
+
+## 📝 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
+
+## 👨‍💻 Author & Copyright
+
+<div align="center">
+
+**© 2025 Akhil TG. All Rights Reserved.**
+
+Created with ❤️ by [Akhil TG](https://github.com/yourusername)
+
+<p>
+  <a href="https://github.com/yourusername">
+    <img src="https://img.shields.io/badge/GitHub-Follow-black?style=for-the-badge&logo=github" alt="GitHub"/>
+  </a>
+  <a href="https://t.me/yourusername">
+    <img src="https://img.shields.io/badge/Telegram-Contact-blue?style=for-the-badge&logo=telegram" alt="Telegram"/>
+  </a>
+</p>
+
+</div>
+
+---
+
+<div align="center">
+
+### ⭐ Star this repo if you find it useful!
+
+**Made with 💙 for the Telegram community**
+
+</div>

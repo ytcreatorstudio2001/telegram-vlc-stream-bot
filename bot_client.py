@@ -1,3 +1,8 @@
+"""
+Telegram VLC Stream Bot - Bot Client Module
+Copyright (c) 2025 Akhil TG. All Rights Reserved.
+"""
+
 from pyrogram import Client
 from pyrogram.storage import MemoryStorage
 from config import Config

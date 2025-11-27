@@ -1,3 +1,11 @@
+"""
+Telegram VLC Stream Bot
+Copyright (c) 2025 Akhil TG. All Rights Reserved.
+
+This bot allows streaming of large media files from Telegram directly to VLC
+or any media player without requiring a full download.
+"""
+
 import logging
 import uvicorn
 from fastapi import FastAPI

@@ -1,4 +1,7 @@
 """
+Telegram VLC Stream Bot - Commands Plugin
+Copyright (c) 2025 Akhil TG. All Rights Reserved.
+
 Enhanced commands plugin with batch support, better link generation, and file info
 """
 import os
@@ -74,7 +77,8 @@ async def start(client: Client, message: Message):
         "• `/start` - Show this message\n"
         "• `/stream` - Reply to a file to get stream link\n"
         "• `/batch` - Generate links for multiple files\n"
-        "• `/help` - Detailed help\n\n"
+        "• `/help` - Detailed help\n"
+        "• `/about` - About this bot\n\n"
         "**💡 Quick Start:**\n"
         "Just send me any video, audio, or document file!\n\n"
         "**🎯 Features:**\n"
@@ -82,7 +86,10 @@ async def start(client: Client, message: Message):
         "✅ Range request support (seeking)\n"
         "✅ Batch link generation\n"
         "✅ Fast and reliable\n\n"
-        f"**🔗 Base URL:** `{Config.URL}`",
+        f"**🔗 Base URL:** `{Config.URL}`\n\n"
+        "━━━━━━━━━━━━━━━━━━━━━━\n"
+        "**👨‍💻 Developer:** Akhil TG\n"
+        "**© 2025** All Rights Reserved",
         disable_web_page_preview=True
     )
 
@@ -113,7 +120,48 @@ async def help_command(client: Client, message: Message):
         "✅ Videos (MP4, MKV, AVI, etc.)\n"
         "✅ Audio (MP3, FLAC, WAV, etc.)\n"
         "✅ Documents\n\n"
-        "Need more help? Contact support!",
+        "━━━━━━━━━━━━━━━━━━━━━━\n"
+        "**👨‍💻 Developer:** Akhil TG\n"
+        "**© 2025** All Rights Reserved",
+        disable_web_page_preview=True
+    )
+
+
+@Client.on_message(filters.command("about"))
+async def about_command(client: Client, message: Message):
+    """About command with bot and developer information."""
+    await message.reply_text(
+        "ℹ️ **About Telegram VLC Stream Bot**\n\n"
+        "**🎬 What is this bot?**\n"
+        "This bot allows you to stream large media files from Telegram "
+        "directly to VLC or any media player without downloading the entire file. "
+        "Perfect for watching movies, listening to music, or accessing large files on the go!\n\n"
+        "**✨ Key Features:**\n"
+        "• 🚀 Direct streaming without full download\n"
+        "• ⏯️ Seek/Resume support (HTTP Range Headers)\n"
+        "• 📱 Universal compatibility (VLC, MX Player, Browsers)\n"
+        "• 💾 Handles large files (2GB+)\n"
+        "• ⚡ Fast and efficient streaming\n"
+        "• 🔒 Secure - no data storage\n"
+        "• 📦 Batch link generation\n\n"
+        "**🛠️ Technology Stack:**\n"
+        "• Python 3.8+\n"
+        "• FastAPI Framework\n"
+        "• Pyrogram Library\n"
+        "• Uvicorn Server\n\n"
+        "**📊 Version:** 2.0.0\n"
+        f"**🌐 Server:** `{Config.URL}`\n\n"
+        "━━━━━━━━━━━━━━━━━━━━━━\n"
+        "**👨‍💻 Developer & Owner**\n"
+        "**Name:** Akhil TG\n"
+        "**Copyright:** © 2025 Akhil TG\n"
+        "**License:** All Rights Reserved\n\n"
+        "━━━━━━━━━━━━━━━━━━━━━━\n"
+        "**💡 Support the Project:**\n"
+        "If you find this bot useful, please star the repository on GitHub!\n\n"
+        "**⚠️ Disclaimer:**\n"
+        "This bot is for personal use only. Please respect copyright laws "
+        "and only stream content you have the right to access.",
         disable_web_page_preview=True
     )
 
@@ -179,7 +227,9 @@ async def generate_and_send_link(reply_to: Message, media_msg: Message):
         "2. Media → Open Network Stream\n"
         "3. Paste the URL above\n"
         "4. Click Play\n\n"
-        "💡 **Tip:** You can seek/forward in the video!"
+        "💡 **Tip:** You can seek/forward in the video!\n\n"
+        "━━━━━━━━━━━━━━━━━━━━━━\n"
+        "_© 2025 Akhil TG - All Rights Reserved_"
     )
     
     await reply_to.reply_text(
