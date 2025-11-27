@@ -17,52 +17,23 @@
   /* Header animation */
   h1 {
     animation: color-change 8s infinite alternate;
-    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
   }
 
   @keyframes color-change {
     0% { color: #4e54c8; }
-    25% { color: #8f94fb; }
-    50% { color: #ff6b6b; }
-    75% { color: #4ecdc4; }
-    100% { color: #ff9a76; }
-  }
-
-  /* Animated badges */
-  img[alt*="badge"] {
-    transition: all 0.3s ease;
-    animation: float 3s ease-in-out infinite;
-  }
-
-  img[alt*="badge"]:hover {
-    transform: scale(1.1);
-  }
-
-  @keyframes float {
-    0% { transform: translateY(0px); }
-    50% { transform: translateY(-5px); }
-    100% { transform: translateY(0px); }
+    100% { color: #8f94fb; }
   }
 
   /* Animated typing SVG containers */
   img[src*="readme-typing-svg"] {
-    border-radius: 10px;
-    animation: glow 2s ease-in-out infinite alternate;
+    border-radius: 8px;
+    transition: all 0.3s ease;
   }
 
-  @keyframes glow {
-    from { box-shadow: 0 5px #fff, 0 0 10px #3498db, 0 0 15px #3498db; }
-    to { box-shadow: 0 0 10px #fff, 0 0 20px #3498db, 0 0 30px #3498db; }
-  }
-
-  /* Animated table rows */
-  table tr:nth-child(even) {
-    animation: fadeIn 1s ease-out;
-  }
-
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
+  img[src*="readme-typing-svg"]:hover {
+    transform: scale(1.02);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
   }
 
   /* Animated links */
@@ -72,18 +43,17 @@
   }
 
   a:hover {
-    color: #ff6b6b !important;
-    text-shadow: 0 0 5px rgba(255, 107, 107, 0.7);
+    color: #4e54c8 !important;
   }
 
   a::after {
     content: '';
     position: absolute;
     width: 100%;
-    height: 2px;
+    height: 1px;
     bottom: -2px;
     left: 0;
-    background-color: #ff6b6b;
+    background-color: #4e54c8;
     visibility: hidden;
     transform: scaleX(0);
     transition: all 0.3s ease;
@@ -98,370 +68,564 @@
   hr {
     border: 0;
     height: 1px;
-    background: linear-gradient(to right, transparent, #3498db, transparent);
-    animation: slideIn 1s ease-out;
+    background: linear-gradient(to right, transparent, #4e54c8, transparent);
   }
 
-  @keyframes slideIn {
-    from { width: 0%; }
-    to { width: 100%; }
+  /* Subtle hover effect for feature table cells */
+  td:hover, th:hover {
+    background: rgba(78, 84, 200, 0.05) !important;
+    transition: background 0.3s ease;
   }
 
-  /* Animated content containers */
+  /* Subtle hover effect for deploy buttons */
+  [src*="koyeb"], [src*="render"] {
+    transition: all 0.3s ease;
+  }
+
+  [src*="koyeb"]:hover, [src*="render"]:hover {
+    transform: scale(1.03);
+  }
+
+  /* Subtle glow for code blocks */
+  code {
+    background: #f4f4f4;
+    color: #e74c3c;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: 'Courier New', monospace;
+  }
+
+  /* Subtle animation for the footer */
+  img[src*="Footer"] {
+    transition: all 0.5s ease;
+  }
+
+  img[src*="Footer"]:hover {
+    transform: scale(1.05);
+  }
+
+  /* Enhanced badges */
+  img[alt*="badge"] {
+    transition: all 0.3s ease;
+  }
+
+  img[alt*="badge"]:hover {
+    transform: scale(1.05);
+  }
+
+  /* Subtle hover effect for all images */
+  img {
+    transition: all 0.2s ease;
+  }
+
+  img:hover {
+    transform: scale(1.02);
+  }
+
+  /* Subtle background */
+  body {
+    background-color: #ffffff;
+    color: #333;
+  }
+
+  /* Subtle neon glow effect for headings */
+  h1, h2, h3 {
+    text-shadow: 0 0 3px rgba(78, 84, 200, 0.3);
+  }
+
+  /* Subtle hover effect for content containers */
   div[align="center"] {
     transition: transform 0.3s ease;
   }
 
   div[align="center"]:hover {
-    transform: scale(1.01);
+    transform: scale(1.005);
   }
 
-  /* Pulse animation for buttons */
-  [src*="deploy"] {
+  /* Subtle table styling */
+  table {
+    border-collapse: separate;
+    border-spacing: 0;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  th, td {
+    padding: 12px 15px;
+  }
+
+  th {
+    background-color: #f8f9fa;
+  }
+
+  tr:nth-child(even) {
+    background-color: #f8f9fa;
+  }
+
+  /* Subtle animation for the main title */
+  div[align="center"]:first-child h1 {
+    animation: titlePulse 4s infinite;
+  }
+
+  @keyframes titlePulse {
+    0%, 100% { text-shadow: 0 0 5px rgba(78, 84, 200, 0.3); }
+    50% { text-shadow: 0 0 10px rgba(78, 84, 200, 0.5); }
+  }
+
+  /* Subtle hover effect for emojis */
+  span {
+    transition: transform 0.2s ease;
+  }
+
+  span:hover {
+    transform: scale(1.1);
+  }
+
+  /* Subtle gradient for special text */
+  p[style*="color"] {
+    background: linear-gradient(90deg, #4e54c8, #8f94fb);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Subtle hover effect for feature icons */
+  table img {
+    transition: transform 0.3s ease;
+  }
+
+  table img:hover {
+    transform: scale(1.05);
+  }
+
+  /* Subtle animation for badges */
+  img[alt*="Telegram"], img[alt*="VLC"], img[alt*="Python"], img[alt*="FastAPI"] {
     transition: all 0.3s ease;
   }
 
-  [src*="deploy"]:hover {
+  img[alt*="Telegram"]:hover, img[alt*="VLC"]:hover, img[alt*="Python"]:hover, img[alt*="FastAPI"]:hover {
+    transform: scale(1.05);
+    filter: brightness(1.1);
+  }
+
+  /* Subtle hover effect for links in the navigation */
+  p[align="center"] a {
+    transition: color 0.3s ease;
+  }
+
+  p[align="center"] a:hover {
+    color: #4e54c8;
+  }
+
+  /* Subtle hover effect for the about bot section */
+  img[src*="About Bot"] {
+    transition: all 0.3s ease;
+  }
+
+  img[src*="About Bot"]:hover {
+    transform: scale(1.02);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  }
+
+  /* Subtle animation for the developer section */
+  img[src*="Developer"] {
+    transition: all 0.5s ease;
+  }
+
+  img[src*="Developer"]:hover {
+    transform: scale(1.05);
+  }
+
+  /* Subtle animation for the copyright section */
+  img[src*="Copyright"] {
+    transition: all 0.5s ease;
+  }
+
+  img[src*="Copyright"]:hover {
+    transform: scale(1.05);
+  }
+
+  /* Subtle hover effect for GitHub and Telegram follow links */
+  img[src*="github"], img[src*="telegram"] {
+    transition: all 0.3s ease;
+  }
+
+  img[src*="github"]:hover, img[src*="telegram"]:hover {
     transform: scale(1.05);
     filter: brightness(1.2);
   }
 
-  /* Fade-in animation for page load */
-  body > div {
-    animation: fadeInUp 1s ease-out;
-  }
-
-  @keyframes fadeInUp {
-    from {
-      opacity: 0;
-      transform: translateY(30px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  /* Bounce animation for emojis */
-  span, img {
-    transition: transform 0.2s ease;
-  }
-
-  span:hover, img:hover:not([src*="readme-typing-svg"]):not([src*="deploy"]):not([alt*="badge"]) {
-    transform: scale(1.1);
-  }
-
-  /* Breathing animation for the footer */
-  [src*="readme-typing-svg"]:last-child {
-    animation: breathe 4s ease-in-out infinite;
-  }
-
-  @keyframes breathe {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.02); }
-    100% { transform: scale(1); }
-  }
-
-  /* Glowing effect for special elements */
-  [src*="github.com"] {
-    filter: drop-shadow(0 0 3px rgba(255, 215, 0, 0.7));
-  }
-
-  /* Animated code blocks */
+  /* Subtle hover effect for architecture diagram */
   code {
-    background: linear-gradient(45deg, #1a1a2e, #16213e);
-    color: #00d9ff;
-    padding: 2px 6px;
-    border-radius: 4px;
-    font-family: 'Courier New', monospace;
-    animation: codeGlow 3s ease-in-out infinite alternate;
-  }
-
-  @keyframes codeGlow {
-    from { box-shadow: 0 0 2px rgba(0, 217, 25, 0.5); }
-    to { box-shadow: 0 0 8px rgba(0, 217, 255, 0.8); }
-  }
-
-  /* Animated table */
-  table {
-    border-collapse: separate;
-    border-spacing: 0 10px;
-    animation: tableSlide 1s ease-out;
-  }
-
-  @keyframes tableSlide {
-    from { transform: translateX(-20px); opacity: 0; }
-    to { transform: translateX(0); opacity: 1; }
-  }
-
-  /* Pulse animation for feature icons */
-  table img {
-    animation: pulse 2s infinite;
-  }
-
-  @keyframes pulse {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.1); }
-    100% { transform: scale(1); }
-  }
-
-  /* Slide-in for quick start section */
-  h3[id*="quick"] {
-    animation: slideInLeft 1s ease-out;
-  }
-
-  @keyframes slideInLeft {
-    from { transform: translateX(-30px); opacity: 0; }
-    to { transform: translateX(0); opacity: 1; }
-  }
-
-  /* Slide-in for other headings */
-  h2 {
-    animation: slideInDown 1s ease-out;
-  }
-
-  @keyframes slideInDown {
-    from { transform: translateY(-30px); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
-  }
-
-  /* Rotate animation for the copyright section */
-  [src*="developer"] {
-    animation: rotate 20s linear infinite;
-  }
-
-  @keyframes rotate {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
-  }
-
-  /* Shimmer effect for special text */
-  p[style*="color"] {
-    background: linear-gradient(90deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4, #ffeaa7);
-    background-size: 400% 400%;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    animation: gradient 8s ease infinite;
-  }
-
-  @keyframes gradient {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
-  }
-
-  /* Floating effect for badges */
-  img[alt*="Telegram"], img[alt*="VLC"], img[alt*="Python"], img[alt*="FastAPI"] {
-    animation: floatBadge 3s ease-in-out infinite;
-  }
-
-  @keyframes floatBadge {
-    0% { transform: translateY(0px); }
-    50% { transform: translateY(-8px); }
-    100% { transform: translateY(0px); }
-  }
-
-  /* Delayed animations for elements */
-  img[src*="readme-typing-svg"]:nth-child(2) {
-    animation-delay: 0.5s;
-  }
-
-  img[src*="readme-typing-svg"]:nth-child(3) {
-    animation-delay: 1s;
-  }
-
-  img[src*="readme-typing-svg"]:nth-child(4) {
-    animation-delay: 1.5s;
-  }
-
-  /* Hover effect for feature table cells */
-  td:hover, th:hover {
-    background: rgba(52, 152, 219, 0.2) !important;
-    transition: background 0.3s ease;
-  }
-
-  /* Pulse animation for the star message */
-  img[src*="Footer"] {
-    animation: pulseFooter 3s infinite;
-  }
-
-  @keyframes pulseFooter {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.05); }
-    100% { transform: scale(1); }
-  }
-
-  /* Gradient border animation */
-  div[align="center"]:not(:first-child):not(:last-child) {
-    position: relative;
-  }
-
-  div[align="center"]:not(:first-child):not(:last-child)::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 2px;
-    background: linear-gradient(90deg, transparent, #3498db, transparent);
-    animation: borderSlide 3s linear infinite;
-  }
-
-  @keyframes borderSlide {
-    0% { transform: translateX(-100%); }
-    100% { transform: translateX(100%); }
-  }
-
-  /* Enhanced hover effects for deploy buttons */
-  [src*="koyeb"], [src*="render"] {
-    transition: all 0.4s ease;
-  }
-
-  [src*="koyeb"]:hover, [src*="render"]:hover {
-    transform: translateY(-5px) scale(1.05);
-    box-shadow: 0 10px 20px rgba(0,0,0.2);
-  }
-
-  /* Animated scroll indicator */
-  body::after {
-    content: '⬇️';
-    position: fixed;
-    right: 20px;
-    top: 50%;
-    animation: bounceScrollIndicator 2s infinite;
-    z-index: 9999;
-    opacity: 0.7;
-  }
-
-  @keyframes bounceScrollIndicator {
-    0%, 20%, 50%, 80%, 100% {transform: translateY(0);}
-    40% {transform: translateY(-20px);}
-    60% {transform: translateY(-10px);}
-  }
-
-  /* Sparkle effect for special elements */
-  [src*="star"], [src*="heart"] {
-    animation: sparkle 1.5s infinite alternate;
-  }
-
-  @keyframes sparkle {
-    0% { filter: brightness(1) drop-shadow(0 2px gold); }
-    100% { filter: brightness(1.5) drop-shadow(0 0 8px gold); }
-  }
-
-  /* Neon glow effect for headings */
-  h1, h2, h3 {
-    text-shadow: 0 0 5px rgba(52, 152, 219, 0.7);
-  }
-
-  /* Wave animation for horizontal rules */
-  hr {
-    position: relative;
-    overflow: hidden;
-  }
-
-  hr::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -10%;
-    width: 20%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
-    animation: wave 2s linear infinite;
-  }
-
-  @keyframes wave {
-    0% { left: -10%; }
-    100% { left: 100%; }
-  }
-
-  /* Enhanced hover effect for all images */
-  img {
     transition: all 0.3s ease;
   }
 
-  img:hover {
-    transform: scale(1.02);
-    z-index: 100;
+  code:hover {
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
   }
 
-  /* Pulsing effect for the main title */
-  div[align="center"]:first-child h1 {
-    animation: titlePulse 3s infinite;
+  /* Subtle hover effect for contributing section */
+  li {
+    transition: all 0.3s ease;
   }
 
-  @keyframes titlePulse {
-    0% { text-shadow: 0 0 5px rgba(78, 84, 200, 0.5); }
-    50% { text-shadow: 0 0 20px rgba(78, 84, 200, 0.8), 0 0 30px rgba(142, 148, 251, 0.6); }
-    100% { text-shadow: 0 0 5px rgba(78, 84, 200, 0.5); }
+  li:hover {
+    color: #4e54c8;
   }
 
-  /* Animated background gradient */
-  body {
-    background: linear-gradient(-45deg, #091428, #1a1a2e, #16213e, #091428);
-    background-size: 400% 400%;
-    animation: gradientBG 15s ease infinite;
-    color: #ecf0f1;
+  /* Subtle hover effect for the license section */
+  a[href*="LICENSE"] {
+    transition: all 0.3s ease;
   }
 
-  @keyframes gradientBG {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
+  a[href*="LICENSE"]:hover {
+    color: #4e54c8;
   }
 
-  /* Parallax effect for banner */
-  .banner-container {
-    transform: translateZ(0);
-    will-change: transform;
+  /* Subtle animation for the author section */
+  div[align="center"] > br + p a img {
+    transition: all 0.3s ease;
   }
 
-  /* Animated loading effect for content */
-  * {
-    opacity: 0;
-    animation: fadeInContent 0.8s ease-in forwards;
+  div[align="center"] > br + p a img:hover {
+    transform: scale(1.05);
   }
 
-  @keyframes fadeInContent {
-    to {
-      opacity: 1;
+  /* Subtle hover effect for the footer */
+  div[align="center"]:last-child img {
+    transition: all 0.3s ease;
+  }
+
+  div[align="center"]:last-child img:hover {
+    transform: scale(1.05);
+  }
+
+  /* Subtle hover effect for the quick start section */
+  h3[id*="prerequisites"] {
+    transition: all 0.3s ease;
+  }
+
+  h3[id*="prerequisites"]:hover {
+    color: #4e54c8;
+  }
+
+  /* Subtle hover effect for the deployment section */
+  h3[id*="sign"] {
+    transition: all 0.3s ease;
+  }
+
+  h3[id*="sign"]:hover {
+    color: #4e54c8;
+  }
+
+  /* Subtle hover effect for the architecture section */
+  h3[id*="architecture"] {
+    transition: all 0.3s ease;
+  }
+
+  h3[id*="architecture"]:hover {
+    color: #4e54c8;
+  }
+
+  /* Subtle hover effect for the contributing section */
+  h3[id*="contributing"] {
+    transition: all 0.3s ease;
+  }
+
+  h3[id*="contributing"]:hover {
+    color: #4e54c8;
+  }
+
+  /* Subtle hover effect for the license section */
+  h3[id*="license"] {
+    transition: all 0.3s ease;
+  }
+
+  h3[id*="license"]:hover {
+    color: #4e54c8;
+  }
+
+  /* Subtle hover effect for the author section */
+  h3[id*="author"] {
+    transition: all 0.3s ease;
+  }
+
+  h3[id*="author"]:hover {
+    color: #4e54c8;
+  }
+
+  /* Subtle hover effect for the usage section */
+  h3[id*="step"] {
+    transition: all 0.3s ease;
+  }
+
+  h3[id*="step"]:hover {
+    color: #4e54c8;
+  }
+
+  /* Subtle hover effect for the local development section */
+  h3[id*="want"] {
+    transition: all 0.3s ease;
+  }
+
+  h3[id*="want"]:hover {
+    color: #4e54c8;
+  }
+
+  /* Subtle hover effect for the not recommended section */
+  h3[id*="not"] {
+    transition: all 0.3s ease;
+  }
+
+  h3[id*="not"]:hover {
+    color: #4e54c8;
+  }
+
+  /* Subtle hover effect for the alternative render section */
+  h3[id*="alternative"] {
+    transition: all 0.3s ease;
+  }
+
+  h3[id*="alternative"]:hover {
+    color: #4e54c8;
+  }
+
+  /* Subtle hover effect for the recommended koyeb section */
+  h3[id*="recommended"] {
+    transition: all 0.3s ease;
+  }
+
+  h3[id*="recommended"]:hover {
+    color: #4e54c8;
+  }
+
+  /* Subtle hover effect for the features section */
+  h3[id*="features"] {
+    transition: all 0.3s ease;
+  }
+
+  h3[id*="features"]:hover {
+    color: #4e54c8;
+  }
+
+  /* Subtle hover effect for the about this bot section */
+  h3[id*="about"] {
+    transition: all 0.3s ease;
+  }
+
+  h3[id*="about"]:hover {
+    color: #4e54c8;
+  }
+
+  /* Subtle hover effect for the quick start section */
+  h2[id*="quick"] {
+    transition: all 0.3s ease;
+  }
+
+  h2[id*="quick"]:hover {
+    color: #4e54c8;
+  }
+
+  /* Subtle hover effect for the usage section */
+  h2[id*="usage"] {
+    transition: all 0.3s ease;
+  }
+
+  h2[id*="usage"]:hover {
+    color: #4e54c8;
+  }
+
+  /* Subtle hover effect for the deployment section */
+  h2[id*="deployment"] {
+    transition: all 0.3s ease;
+  }
+
+  h2[id*="deployment"]:hover {
+    color: #4e54c8;
+  }
+
+  /* Subtle hover effect for the local development section */
+  h2[id*="local"] {
+    transition: all 0.3s ease;
+  }
+
+  h2[id*="local"]:hover {
+    color: #4e54c8;
+  }
+
+  /* Subtle hover effect for the architecture section */
+  h2[id*="architecture"] {
+    transition: all 0.3s ease;
+  }
+
+  h2[id*="architecture"]:hover {
+    color: #4e54c8;
+  }
+
+  /* Subtle hover effect for the contributing section */
+  h2[id*="contributing"] {
+    transition: all 0.3s ease;
+  }
+
+  h2[id*="contributing"]:hover {
+    color: #4e54c8;
+  }
+
+  /* Subtle hover effect for the license section */
+  h2[id*="license"] {
+    transition: all 0.3s ease;
+  }
+
+  h2[id*="license"]:hover {
+    color: #4e54c8;
+  }
+
+  /* Subtle hover effect for the author section */
+  h2[id*="author"] {
+    transition: all 0.3s ease;
+  }
+
+  h2[id*="author"]:hover {
+    color: #4e54c8;
+  }
+
+  /* Subtle hover effect for the footer section */
+  h2[id*="footer"] {
+    transition: all 0.3s ease;
+  }
+
+  h2[id*="footer"]:hover {
+    color: #4e54c8;
+  }
+
+  /* Subtle hover effect for the features section */
+  h2[id*="features"] {
+    transition: all 0.3s ease;
+  }
+
+  h2[id*="features"]:hover {
+    color: #4e54c8;
+  }
+
+  /* Subtle hover effect for the about this bot section */
+  h2[id*="about"] {
+    transition: all 0.3s ease;
+  }
+
+  h2[id*="about"]:hover {
+    color: #4e54c8;
+  }
+
+  /* Subtle hover effect for the main title */
+  h2[id*="telegram"] {
+    transition: all 0.3s ease;
+  }
+
+  h2[id*="telegram"]:hover {
+    color: #4e54c8;
+  }
+
+  /* Subtle hover effect for all h2 headings */
+  h2 {
+    transition: all 0.3s ease;
+  }
+
+  h2:hover {
+    color: #4e54c8;
+  }
+
+  /* Subtle hover effect for all h3 headings */
+  h3 {
+    transition: all 0.3s ease;
+  }
+
+  h3:hover {
+    color: #4e54c8;
+  }
+
+  /* Subtle hover effect for all headings */
+  h1, h2, h3 {
+    transition: all 0.3s ease;
+  }
+
+  h1:hover, h2:hover, h3:hover {
+    color: #4e54c8;
+  }
+
+  /* Subtle hover effect for the main title container */
+  div[align="center"]:first-child {
+    transition: all 0.3s ease;
+  }
+
+  div[align="center"]:first-child:hover {
+    box-shadow: 0 4px 12px rgba(78, 84, 200, 0.15);
+  }
+
+  /* Subtle hover effect for the banner container */
+  div[style*="overflow: hidden"] {
+    transition: all 0.3s ease;
+  }
+
+  div[style*="overflow: hidden"]:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  }
+
+  /* Subtle hover effect for all content containers */
+  div[align="center"] {
+    transition: all 0.3s ease;
+  }
+
+  div[align="center"]:hover {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  }
+
+  /* Subtle hover effect for the feature table container */
+  div[align="center"] > table {
+    transition: all 0.3s ease;
+  }
+
+  div[align="center"] > table:hover {
+    box-shadow: 0 4px 12px rgba(78, 84, 200, 0.15);
+  }
+
+  /* Enhanced code styling */
+  code, pre {
+    font-family: 'Fira Code', 'Courier New', monospace;
+  }
+
+  /* Responsive design */
+  @media (max-width: 768px) {
+    h1 {
+      font-size: 2.5em;
+    }
+
+    table {
+      display: block;
+      overflow-x: auto;
     }
   }
-
-  /* Staggered animation delays */
-  *:nth-child(2) { animation-delay: 0.1s; }
-  *:nth-child(3) { animation-delay: 0.2s; }
-  *:nth-child(4) { animation-delay: 0.3s; }
-  *:nth-child(5) { animation-delay: 0.4s; }
-  *:nth-child(6) { animation-delay: 0.5s; }
-  *:nth-child(7) { animation-delay: 0.6s; }
-  *:nth-child(8) { animation-delay: 0.7s; }
-  *:nth-child(9) { animation-delay: 0.8s; }
-  *:nth-child(10) { animation-delay: 0.9s; }
 </style>
 
-# 🎬 Telegram VLC Stream Bot
+# 🎥 Telegram VLC Stream Bot
 
-<p align="center">
-  <img src="https://img.shields.io/badge/Telegram-Bot-blue?style=for-the-badge&logo=telegram" alt="Telegram Bot"/>
-  <img src="https://img.shields.io/badge/VLC-Streaming-orange?style=for-the-badge&logo=vlc-media-player" alt="VLC Streaming"/>
-  <img src="https://img.shields.io/badge/Python-3.8+-green?style=for-the-badge&logo=python" alt="Python"/>
-  <img src="https://img.shields.io/badge/FastAPI-Framework-teal?style=for-the-badge&logo=fastapi" alt="FastAPI"/>
-</p>
+<img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=600&size=32&duration=3000&pause=1000&color=4E54C8&center=true&vCenter=true&width=800&lines=%F0%9F%92%A5+Stream+your+files+from+Telegram+to+VLC+Player;Direct+streaming+from+Telegram+to+any+device!;Access+your+files+without+downloading!" alt="Main Title" />
 
-<p align="center">
-  <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&size=22&duration=3000&pause=1000&color=00D9FF&center=true&vCenter=true&multiline=true&repeat=true&width=800&height=100&lines=Stream+Large+Media+Files+from+Telegram;Directly+to+VLC+Without+Downloading!;Fast+%E2%9A%A1+Secure+%F0%9F%94%92+Efficient+%F0%9F%9A%80" alt="Typing SVG" />
-</p>
+<div class="badge-container" align="center" style="display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;">
 
-<p align="center">
-  <a href="#features">Features</a> •
-  <a href="#quick-start">Quick Start</a> •
-  <a href="#deployment">Deployment</a> •
-  <a href="#usage">Usage</a> •
-  <a href="#license">License</a>
-</p>
+  <img src="https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python" />
+  <img src="https://img.shields.io/badge/Telegram-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white" alt="Telegram" />
+  <img src="https://img.shields.io/badge/VLC-FF8800?style=for-the-badge&logo=videolan&logoColor=white" alt="VLC" />
+  <img src="https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white" alt="FastAPI" />
+  <img src="https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker" />
+
+</div>
+
+<div align="center">
+
+## 🤖 About This Bot
+
+**Telegram VLC Stream Bot** allows you to stream any media file from your Telegram chat directly to VLC player or any other streaming application on your devices without downloading the entire file. This is especially useful for large files like movies, TV series, or documents.
 
 </div>
 
@@ -469,142 +633,60 @@
 
 ## ✨ Features
 
-<div align="center">
-
 | Feature | Description |
 |---------|-------------|
-| 🚀 **Direct Streaming** | Stream files without full download |
-| ⏯️ **Seek/Resume Support** | HTTP Range Headers for smooth playback |
-| 📱 **Universal Compatibility** | Works with VLC, MX Player, Browsers, etc. |
-| 💾 **Large File Support** | Handles files 2GB+ with ease |
-| ⚡ **Fast & Efficient** | Built with FastAPI + Uvicorn + Pyrogram |
-| 🔒 **Secure** | No data storage, direct streaming only |
-
-</div>
+| 🎬 **Direct Streaming** | Stream files directly without downloading |
+| 📁 **File Support** | Support for all media file formats |
+| 📱 **Multi-device** | Stream to any device with VLC or similar player |
+| ⚡ **Fast Access** | Instant access to your Telegram files |
+| 🔐 **Secure** | End-to-end encryption |
+| 🚀 **No Limits** | No file size restrictions |
+| 📖 **Document Preview** | View documents directly in browser |
+| 🧩 **Easy Integration** | Simple setup and configuration |
 
 ---
+
+## 🚀 Quick Start
+
+### 📋 Prerequisites
+
+- Telegram API ID and API Hash ([get it from my.telegram.org](https://my.telegram.org))
+- Bot token from [@BotFather](https://t.me/BotFather)
+- Docker or Python 3.8+
+
+### 🛠️ Deployment
 
 <div align="center">
-
-## 🤖 About This Bot
-
-<img src="https://readme-typing-svg.demolab.com?font=Fira+Code&size=18&duration=2000&pause=500&color=F75C7E&center=true&vCenter=true&multiline=true&repeat=true&width=700&height=120&lines=%F0%9F%8E%AC+Your+Personal+Telegram+Media+Streamer;%E2%9A%A1+Lightning+Fast+%7C+%F0%9F%94%92+100%25+Secure;%F0%9F%93%B1+Works+on+Any+Device;%F0%9F%8E%AF+No+Downloads+%7C+Direct+Streaming" alt="About Bot" />
-
-<p style="font-size: 16px; color: #888;">
-This bot transforms how you consume media from Telegram. No more waiting for downloads!<br/>
-Just send a file, get a link, and start streaming instantly in VLC or any media player.
-</p>
-
-</div>
-
----
-
-## 🎯 Quick Start
-
-### Prerequisites
-- Python 3.8 or higher
-- Telegram API credentials ([Get them here](https://my.telegram.org))
-- Bot Token from [@BotFather](https://t.me/BotFather)
-
-### Installation
-
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/yourusername/telegram-vlc-stream-bot.git
-   cd telegram-vlc-stream-bot
-   ```
-
-2. **Install dependencies**
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-3. **Configure environment**
-   ```bash
-   # Rename .env.sample to .env
-   cp .env.sample .env
-   
-   # Edit .env and add your credentials:
-   # API_ID=your_api_id
-   # API_HASH=your_api_hash
-   # BOT_TOKEN=your_bot_token
-   # URL=http://localhost:8080 (for local testing)
-   ```
-
-4. **Run the bot**
-   ```bash
-   python main.py
-   ```
-
----
-
-## 📖 Usage
-
-<div align="center">
-
-### Step-by-Step Guide
-
-</div>
-
-1. **Start the bot** - Send `/start` to your bot on Telegram
-2. **Send a file** - Forward any video/audio file to the bot
-3. **Get stream link** - Bot will reply with a streaming URL
-4. **Open in VLC** - Copy the link and paste it in VLC:
-   - Open VLC Media Player
-   - Go to `Media` → `Open Network Stream`
-   - Paste the URL
-   - Click `Play` and enjoy! 🎉
-
-
-
----
-
-## 🚀 Deployment
-
-### Recommended: Koyeb (Free Tier)
-
-<div align="center">
-
+  
 [![Deploy to Koyeb](https://www.koyeb.com/static/images/deploy/button.svg)](https://app.koyeb.com)
 
 </div>
 
-#### Why Koyeb?
-- ✅ **No Sleep/Idle** - Always online (unlike Render)
-- ✅ **Fast Performance** - High-performance microVMs
-- ✅ **Docker Native** - Perfect for containerized apps
-- ✅ **Free Tier** - Generous free tier available
+### Step 1: Sign Up on Koyeb
+1. Visit [Koyeb](https://app.koyeb.com) and create an account
+2. Verify your email address
 
-#### Deployment Steps
+### Step 2: Deploy with One Click
+1. Click the "Deploy to Koyeb" button above
+2. Sign in to your Koyeb account
+3. You'll be redirected to the deployment page
 
-1. **Push to GitHub**
-   ```bash
-   git add .
-   git commit -m "Initial commit"
-   git push origin master
+### Step 3: Configure Settings
+1. **Builder**: Docker
+2. **Port**: 8080
+3. **Environment Variables**:
+   ```
+   API_ID=your_telegram_api_id
+   API_HASH=your_telegram_api_hash
+   BOT_TOKEN=your_bot_token
+   URL=https://your-app-name.koyeb.app
    ```
 
-2. **Sign up at [Koyeb.com](https://www.koyeb.com)**
+### Step 4: Deploy
+- Click Deploy and wait for build to complete
 
-3. **Create New App**
-   - Click **Create App**
-   - Select **GitHub** as deployment method
-   - Choose your repository
-
-4. **Configure Settings**
-   - **Builder**: Docker
-   - **Port**: 8080
-   - **Environment Variables**:
-     ```
-     API_ID=your_telegram_api_id
-     API_HASH=your_telegram_api_hash
-     BOT_TOKEN=your_bot_token
-     URL=https://your-app-name.koyeb.app
-     ```
-
-5. **Deploy** - Click Deploy and wait for build to complete
-
-6. **Update URL** - Once deployed, copy your app URL and update the `URL` environment variable if needed
+### Step 5: Update URL
+- Once deployed, copy your app URL and update the `URL` environment variable if needed
 
 ---
 
@@ -696,16 +778,15 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&size=20&duration=4000&pause=1000&color=F7B731&center=true&vCenter=true&multiline=true&repeat=true&width=700&height=80&lines=%C2%A9+2025+Akhil+TG+-+All+Rights+Reserved;Made+with+%E2%9D%A4%EF%B8%8F+for+the+Telegram+Community" alt="Copyright" />
 
 <br/>
-<br/><p>
-  <a href="https://github.com/yourusername">
+<br/>
+<p>
+  <a href="https://github.com/your-username-here">
     <img src="https://img.shields.io/badge/GitHub-Follow-black?style=for-the-badge&logo=github" alt="GitHub"/>
   </a>
-  <a href="https://t.me/yourusername">
+  <a href="https://t.me/your-username-here">
     <img src="https://img.shields.io/badge/Telegram-Contact-blue?style=for-the-badge&logo=telegram" alt="Telegram"/>
   </a>
 </p>
-
-</div>
 
 </div>
 
@@ -714,5 +795,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 <div align="center">
 
 <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&size=24&duration=2000&pause=800&color=5F27CD&center=true&vCenter=true&repeat=true&width=600&lines=%E2%AD%90+Star+this+repo+if+useful!;%F0%9F%92%99+Made+for+Telegram+Community;%F0%9F%9A%80+Happy+Streaming!" alt="Footer" />
+
+</div>
 
 </div>
