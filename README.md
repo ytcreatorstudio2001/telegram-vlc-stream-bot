@@ -244,9 +244,7 @@ Contributions are always welcome! Here's how you can help:
 
   <br>
 
-  <a href="https://github.com/ytcreatorstudio2001/telegram-vlc-stream-bot">
-    <img src="https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fgithub.com%2Fytcreatorstudio2001%2Ftelegram-vlc-stream-bot&count_bg=%232CA5E0&title_bg=%23555555&icon=github.svg&icon_color=%23E7E7E7&title=Visitors&edge_flat=false" alt="Visitor Count"/>
-  </a>
+  ![Visitor Count](https://komarev.com/ghpvc/?username=ytcreatorstudio2001-telegram-vlc-stream-bot&label=Visitors&color=2CA5E0&style=for-the-badge)
 
 </div>
 
