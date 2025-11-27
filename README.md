@@ -1,6 +1,6 @@
 <div align="center">
 
-  <img src="assets/banner.gif" alt="Telegram VLC Stream Bot Banner" width="100%">
+  <img src="assets/banner.gif" alt="Telegram VLC Stream Bot Banner" width="80%">
 
   <br>
 
