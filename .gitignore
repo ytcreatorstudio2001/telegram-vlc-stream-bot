@@ -1,11 +1,57 @@
+# Python cache
 __pycache__/
 *.py[cod]
 *$py.class
+*.so
+
+# Environment files
 .env
 .venv
 env/
 venv/
+ENV/
+
+# Pyrogram session files
 *.session
 *.session-journal
+
+# Working directories
 work_dir/
-adv-file-sharing-bot/
+sessions/
+
+# Logs
+*.log
+bot.log
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Temporary files
+*.tmp
+*.bak
+*.old
+
+# Test files (keep in repo but ignore outputs)
+test_*.py
+check_*.py
+find_*.py
+
+# Old documentation (already removed)
+CLEANUP_PLAN.md
+
+# JSON data files
+latest_release.json
+users.json
+
+# Deployment configs for other platforms
+render.yaml
+docker-compose.yml
